@@ -1,8 +1,5 @@
-import type { IEmbed, IEmbedAuthor, IEmbedFooter, IEmbedField } from '../types/embed.js';
+import type { IEmbed, IEmbedAuthor, IEmbedFooter, IEmbedField } from '@/types/embed.js';
 
-/**
- * Fluent builder for creating Serchat embeds.
- */
 export class EmbedBuilder {
     private data: IEmbed;
 
@@ -51,13 +48,13 @@ export class EmbedBuilder {
         return this;
     }
 
-    public setThumbnail(url: string | null): this {
-        this.data.thumbnail = url ? { url } : undefined;
+    public setThumbnail(url: string | null, width?: number, height?: number): this {
+        this.data.thumbnail = url ? { url, width, height } : undefined;
         return this;
     }
 
-    public setImage(url: string | null): this {
-        this.data.image = url ? { url } : undefined;
+    public setImage(url: string | null, width?: number, height?: number): this {
+        this.data.image = url ? { url, width, height } : undefined;
         return this;
     }
 
