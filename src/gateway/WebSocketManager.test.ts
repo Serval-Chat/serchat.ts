@@ -13,6 +13,8 @@ describe('WebSocketManager', () => {
     type MockWs = {
         on: ReturnType<typeof vi.fn>;
         send: ReturnType<typeof vi.fn>;
+        close: ReturnType<typeof vi.fn>;
+        removeAllListeners: ReturnType<typeof vi.fn>;
         readyState: number;
     };
     let mockWs: MockWs;
@@ -23,12 +25,15 @@ describe('WebSocketManager', () => {
         mockWs = {
             on: vi.fn(),
             send: vi.fn(),
+            close: vi.fn(),
+            removeAllListeners: vi.fn(),
             readyState: 1, // OPEN
         };
         vi.mocked(WebSocket).mockImplementation(function () {
             return mockWs;
         });
         vi.spyOn(client, 'getToken').mockReturnValue('mock-token');
+        vi.clearAllMocks();
     });
 
     it('should emit messageReactionAdd when receiving reaction_added event', async () => {
@@ -190,5 +195,45 @@ describe('WebSocketManager', () => {
         expect(emittedInteraction).toBeDefined();
         expect(emittedInteraction.permissions).toEqual({ administrator: true });
         expect(emittedInteraction.hasPermission('banMembers')).toBe(true);
+    });
+
+    it('connect() rejects if the connection closes before authentication', async () => {
+        const connectPromise = manager.connect();
+
+        const closeCallback = mockWs.on.mock.calls.find(
+            (c: unknown[]) => c[0] === 'close',
+        )?.[1] as () => void;
+
+        closeCallback();
+
+        await expect(connectPromise).rejects.toThrow('WebSocket closed before authentication.');
+    });
+
+    it('attempts to reconnect after disconnect', async () => {
+        vi.useFakeTimers();
+        const connectPromise = manager.connect();
+        const openCallback = mockWs.on.mock.calls.find(
+            (c: unknown[]) => c[0] === 'open',
+        )![1] as () => void;
+        openCallback();
+        const messageCallback = mockWs.on.mock.calls.find(
+            (c: unknown[]) => c[0] === 'message',
+        )![1] as (data: string) => void;
+        messageCallback(
+            JSON.stringify({
+                event: { type: 'authenticated', payload: { user: { id: 'bot-1' } } },
+            }),
+        );
+        await connectPromise;
+
+        const closeCallback = mockWs.on.mock.calls.find(
+            (c: unknown[]) => c[0] === 'close',
+        )![1] as () => void;
+        closeCallback();
+
+        vi.runAllTimers();
+
+        expect(WebSocket).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
     });
 });

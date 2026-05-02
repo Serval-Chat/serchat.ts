@@ -7,6 +7,7 @@ import { Message } from '@/structures/Message.js';
 import type { Interaction } from '@/structures/Interaction.js';
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
 import type { IMessageServer, ISendMessageRequest } from '@/types/message.js';
+import { Logger, LogLevel } from '@/util/Logger.js';
 import type {
     MessageUpdatePayload,
     MessageDeletePayload,
@@ -47,6 +48,7 @@ import type { IMessageWithEmbeds } from '@/types/message.js';
 
 export interface ClientOptions {
     apiBaseUrl?: string;
+    logLevel?: LogLevel;
 }
 
 import type { ClientUser } from '@/types/user.js';
@@ -109,6 +111,7 @@ export class Client extends EventEmitter {
     public commands: ApplicationCommandManager;
     public user: ClientUser | null = null;
     public options: ClientOptions;
+    public logger: Logger;
     private rest: AxiosInstance;
     private token: string | null = null;
 
@@ -116,8 +119,10 @@ export class Client extends EventEmitter {
         super();
         this.options = {
             apiBaseUrl: 'http://localhost:3000/api/v1',
+            logLevel: LogLevel.INFO,
             ...options,
         };
+        this.logger = new Logger(this.options.logLevel);
         this.rest = axios.create({
             baseURL: this.options.apiBaseUrl,
         });
@@ -164,6 +169,7 @@ export class Client extends EventEmitter {
     }
 
     public async login(token: string, callback?: () => Promise<void>): Promise<void> {
+        this.logger.info('Logging in with token...');
         this.token = token;
         this.rest.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         await this.connectWS();
