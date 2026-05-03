@@ -79,4 +79,8 @@ export class Message implements IMessageServer {
     public async react(emoji: string): Promise<void> {
         return this.client.reactToMessage(this.serverId, this.channelId, this.messageId, emoji);
     }
+
+    public async delete(): Promise<void> {
+        return this.client.deleteMessage(this.serverId, this.channelId, this.messageId);
+    }
 }

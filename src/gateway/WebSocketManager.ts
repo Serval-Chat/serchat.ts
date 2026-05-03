@@ -240,7 +240,6 @@ export class WebSocketManager {
 
         this.ws.on('error', (err) => {
             this.client.logger.error(`WebSocket error: ${err.message}`);
-            this.client.emit('error', err);
             if (this.connectionReject) {
                 this.connectionReject(err);
                 this.connectionPromise = null;

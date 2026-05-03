@@ -45,6 +45,7 @@ import type {
 } from '@/types/events.js';
 import type { JsonValue } from '@/types/json.js';
 import type { IMessageWithEmbeds } from '@/types/message.js';
+import * as Errors from '@/errors/APIError.js';
 
 export interface ClientOptions {
     apiBaseUrl?: string;
@@ -130,18 +131,38 @@ export class Client extends EventEmitter {
         this.rest.interceptors.response.use(
             (response) => response,
             (error) => {
-                if (error.response?.data) {
-                    const serverMessage = error.response.data.message || error.response.data;
-                    const apiError = new Error(
-                        `Serchat API Error (${error.response.status}): ${JSON.stringify(serverMessage)}`,
-                    );
-                    (
-                        apiError as Error & {
-                            response?: { status: number; data: string | Record<string, string> };
-                        }
-                    ).response = error.response;
+                if (error.response) {
+                    const { status, data } = error.response;
+                    let apiError: Errors.APIError;
+
+                    switch (status) {
+                        case 400:
+                            apiError = new Errors.BadRequestError(data, error.response);
+                            break;
+                        case 401:
+                            apiError = new Errors.UnauthorizedError(data, error.response);
+                            break;
+                        case 403:
+                            apiError = new Errors.ForbiddenError(data, error.response);
+                            break;
+                        case 404:
+                            apiError = new Errors.NotFoundError(data, error.response);
+                            break;
+                        case 429:
+                            apiError = new Errors.RateLimitError(data, error.response);
+                            break;
+                        case 500:
+                            apiError = new Errors.InternalServerError(data, error.response);
+                            break;
+                        default:
+                            apiError = new Errors.APIError(status, data, error.response);
+                    }
+
+                    this.logger.error(apiError.message);
                     return Promise.reject(apiError);
                 }
+
+                this.logger.error(`Network Error: ${error.message}`);
                 return Promise.reject(error);
             },
         );

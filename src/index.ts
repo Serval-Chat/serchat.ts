@@ -9,3 +9,4 @@ export { BotCommand, type CommandOption, type CommandOptionType } from './struct
 export type { Interaction as CommandInteraction } from './structures/Interaction.js';
 export * from './managers/ApplicationCommandManager.js';
 export * from './builders/MessageBuilder.js';
+export * from './errors/APIError.js';
