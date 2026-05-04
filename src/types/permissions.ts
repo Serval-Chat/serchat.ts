@@ -23,4 +23,4 @@ export const PERMISSION_KEYS = [
 
 export type PermissionKey = (typeof PERMISSION_KEYS)[number];
 
-export type Permissions = Partial<Record<PermissionKey, boolean>>;
+export type ServerPermissions = Partial<Record<PermissionKey, boolean>>;

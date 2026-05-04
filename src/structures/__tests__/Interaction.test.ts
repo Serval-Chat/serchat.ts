@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { Interaction } from './Interaction.js';
+import { Interaction } from '@/structures/Interaction.js';
 import type { Message } from './Message.js';
 import { Client } from '@/client/Client.js';
 import type { InteractionCreatePayload } from '@/types/events.js';

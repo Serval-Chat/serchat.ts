@@ -5,21 +5,46 @@ import {
     type SlashCommandOption,
 } from '@/types/commands.js';
 
+/** Union of supported slash-command option value types. */
 export type CommandOptionType = 'string' | 'integer' | 'boolean' | 'user' | 'channel' | 'role';
 
+/** Descriptor for a single slash-command option. */
 export interface CommandOption {
+    /** The type of value this option accepts. */
     type: CommandOptionType;
+    /** Short description shown in the command picker UI. */
     description: string;
+    /** Whether the user must provide this option. Defaults to `false`. */
     required?: boolean;
 }
 
+/**
+ * Abstract base class for all bot slash commands.
+ *
+ * @example
+ * ```ts
+ * class PingCommand extends BotCommand {
+ *   name = 'ping';
+ *   description = 'Replies with Pong!';
+ *
+ *   async execute(interaction: Interaction) {
+ *     await interaction.reply('Pong!');
+ *   }
+ * }
+ * ```
+ */
 export abstract class BotCommand {
+    /** The command name as it appears in the slash-command picker (lowercase, no spaces). */
     public abstract name: string;
+    /** Short description displayed in the command picker UI. */
     public abstract description: string;
+    /** Optional map of option names to their descriptors. */
     public options?: Record<string, CommandOption>;
 
+    /** Called when a user invokes this command. */
     public abstract execute(interaction: Interaction): Promise<void>;
 
+    /** Serialises the command to the API payload format. */
     public toJSON(): SlashCommandData {
         const options: SlashCommandOption[] = [];
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EmbedBuilder } from './EmbedBuilder.js';
+import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
 
 describe('EmbedBuilder', () => {
     it('should initialize with default rich type', () => {

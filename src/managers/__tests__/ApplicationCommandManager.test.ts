@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ApplicationCommandManager } from '@/managers/ApplicationCommandManager.js';
-import type { AxiosInstance } from 'axios';
+import type { RESTClient } from '@/client/RESTClient.js';
 import { BotCommand } from '@/structures/BotCommand.js';
 import type { Interaction } from '@/structures/Interaction.js';
 
@@ -15,7 +15,7 @@ class MockCommand extends BotCommand {
 describe('ApplicationCommandManager', () => {
     const mockRest = {
         put: vi.fn().mockResolvedValue({ data: [] }),
-    } as unknown as AxiosInstance;
+    } as unknown as RESTClient;
 
     it('should throw an error when registering a duplicate command name', () => {
         const manager = new ApplicationCommandManager(mockRest);

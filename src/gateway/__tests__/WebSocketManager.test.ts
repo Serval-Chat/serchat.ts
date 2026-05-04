@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { WebSocketManager } from './WebSocketManager.js';
+import { WebSocketManager } from '@/gateway/WebSocketManager.js';
 import { Client } from '@/client/Client.js';
 import { Interaction } from '@/structures/Interaction.js';
 import WebSocket from 'ws';

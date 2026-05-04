@@ -5,15 +5,22 @@ import type { Client } from '@/client/Client.js';
 import { Message } from '@/structures/Message.js';
 import { Interaction } from '@/structures/Interaction.js';
 import type { IWsIncomingMessage } from '@/types/ws.js';
+import type { JsonValue } from '@/types/json.js';
 
+/** Manages the bot's WebSocket connection to the Serchat gateway. */
 export class WebSocketManager {
+    /** The underlying `ws` WebSocket instance, or `null` when disconnected. */
     public ws: WebSocket | null = null;
     private client: Client;
+    /** Correlates request IDs with their resolve/reject handlers. */
     private pendingRequests = new Map<
         string,
         { resolve: Function; reject: Function; timeout: NodeJS.Timeout }
     >();
 
+    /**
+     * @param client - The owning {@link Client} instance.
+     */
     constructor(client: Client) {
         this.client = client;
     }
@@ -23,6 +30,7 @@ export class WebSocketManager {
     private connectionResolve: (() => void) | null = null;
     private connectionReject: ((err: Error) => void) | null = null;
 
+    /** Establishes the WebSocket connection. */
     public async connect(): Promise<void> {
         if (this.connectionPromise) return this.connectionPromise;
 
@@ -35,6 +43,10 @@ export class WebSocketManager {
         return this.connectionPromise;
     }
 
+    /**
+     * Internal method that creates and configures the raw WebSocket instance.
+     * Called by {@link connect} and by the reconnect scheduler.
+     */
     private _connect(): void {
         if (!this.client.getToken()) {
             const err = new Error('Client is not logged in.');
@@ -47,7 +59,7 @@ export class WebSocketManager {
             return;
         }
 
-        const baseUrl = this.client.getRest().defaults.baseURL || 'http://localhost:3000/api/v1';
+        const baseUrl = this.client.options.apiBaseUrl || 'https://rolling.catfla.re/api/v1';
         const wsUrl = baseUrl.replace(/^http/, 'ws').replace(/\/api\/v1\/?$/, '/ws');
 
         this.client.logger.info(`Connecting to WebSocket at ${wsUrl}...`);
@@ -103,7 +115,7 @@ export class WebSocketManager {
                     const details = msg.event.payload.details as { message?: string } | undefined;
                     req.reject(
                         new Error(
-                            `WebSocket Error [${msg.event.payload.code}]: ${details?.message}`,
+                            `WebSocket Error [${(msg.event.payload as Record<string, JsonValue>).code}]: ${details?.message}`,
                         ),
                     );
                 } else if (msg.event?.payload) {
@@ -230,9 +242,9 @@ export class WebSocketManager {
                     this.client.emit('userUpdate', event.payload);
                     break;
                 case 'error':
-                case 'authenticated':
                 case 'ping':
                 case 'pong':
+                case 'authenticated':
                 case 'server_joined':
                     break;
             }
@@ -261,6 +273,7 @@ export class WebSocketManager {
         });
     }
 
+    /** Reconnects with exponential backoff. */
     private scheduleReconnect(): void {
         if (this.reconnectTimeout) return;
 
@@ -276,6 +289,7 @@ export class WebSocketManager {
         }, delay);
     }
 
+    /** Sends a join_server event and waits for confirmation. */
     public async joinServer(serverId: string): Promise<void> {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
             throw new Error('WebSocket is not connected.');

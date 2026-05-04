@@ -166,7 +166,7 @@ export interface InviteDeletedPayload {
     senderId: string;
 }
 
-import type { Permissions } from './permissions.js';
+import type { ServerPermissions } from './permissions.js';
 
 export interface InteractionCreatePayload {
     command: string;
@@ -175,7 +175,7 @@ export interface InteractionCreatePayload {
     channelId: string;
     senderId: string;
     senderUsername: string;
-    senderPermissions?: Permissions;
+    senderPermissions?: ServerPermissions;
     user?: { id: string; username: string };
     invocationId?: string;
 }

@@ -5,29 +5,53 @@ import type { InteractionValue } from '@/types/interactions.js';
 
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
 
+/**
+ * Represents a message received from the Serchat server.
+ *
+ * Wraps the raw API payload and exposes helper methods for common actions
+ * like replying, reacting, and deleting.
+ */
 export class Message implements IMessageServer {
+    /** Primary message identifier. Normalised from either `messageId` or `_id`. */
     public messageId: string;
+    /** Legacy MongoDB `_id` field, present on older messages. */
     public _id?: string;
+    /** ID of the server this message belongs to. */
     public serverId: string;
+    /** ID of the channel this message was posted in. */
     public channelId: string;
+    /** ID of the user who sent the message. */
     public senderId: string;
+    /** Display name of the user who sent the message. */
     public senderUsername: string;
+    /** Plain text content of the message. */
     public text: string;
+    /** ISO 8601 timestamp of when the message was created. */
     public createdAt: string;
+    /** ID of the message this message is replying to, if any. */
     public replyToId?: string;
+    /** Partial snapshot of the message being replied to, if any. */
     public repliedTo?: {
         messageId: string;
         senderId: string;
         senderUsername: string;
         text: string;
     };
+    /** Whether the message has been edited since it was first sent. */
     public isEdited: boolean;
+    /** Whether the message is pinned in its channel. */
     public isPinned: boolean;
+    /** Whether the message is stickied at the top of the channel. */
     public isSticky: boolean;
+    /** Whether the message was sent via a webhook integration. */
     public isWebhook: boolean;
+    /** Display name override for webhook messages. */
     public webhookUsername?: string;
+    /** Avatar URL override for webhook messages. */
     public webhookAvatarUrl?: string;
+    /** Rich embed objects attached to this message. */
     public embeds?: IEmbed[];
+    /** Interaction metadata if this message was sent in response to a slash command. */
     public interaction?: {
         command: string;
         options: { name: string; value: InteractionValue }[];
@@ -62,6 +86,7 @@ export class Message implements IMessageServer {
         this.interaction = data.interaction;
     }
 
+    /** Sends a reply to this message. */
     public async reply(content: string | ISendMessageRequest | EmbedBuilder): Promise<Message> {
         let payload: ISendMessageRequest;
 
@@ -76,10 +101,12 @@ export class Message implements IMessageServer {
         return this.client.sendMessage(this.serverId, this.channelId, payload);
     }
 
+    /** Adds a reaction to this message. */
     public async react(emoji: string): Promise<void> {
         return this.client.reactToMessage(this.serverId, this.channelId, this.messageId, emoji);
     }
 
+    /** Deletes this message. */
     public async delete(): Promise<void> {
         return this.client.deleteMessage(this.serverId, this.channelId, this.messageId);
     }

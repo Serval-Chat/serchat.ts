@@ -3,6 +3,12 @@ export * from './builders/EmbedBuilder.js';
 export * from './types/embed.js';
 export * from './types/message.js';
 export * from './types/commands.js';
+export * from './types/events.js';
+export * from './types/interactions.js';
+export * from './types/permissions.js';
+export * from './types/user.js';
+export * from './types/ws.js';
+export * from './types/json.js';
 export * from './structures/Message.js';
 export * from './structures/Interaction.js';
 export { BotCommand, type CommandOption, type CommandOptionType } from './structures/BotCommand.js';
@@ -10,3 +16,5 @@ export type { Interaction as CommandInteraction } from './structures/Interaction
 export * from './managers/ApplicationCommandManager.js';
 export * from './builders/MessageBuilder.js';
 export * from './errors/APIError.js';
+export * from './util/Logger.js';
+export * from './gateway/WebSocketManager.js';
