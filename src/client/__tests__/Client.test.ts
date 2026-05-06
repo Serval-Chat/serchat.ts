@@ -151,6 +151,7 @@ describe('Client', () => {
             mockFetch.mockResolvedValueOnce({
                 ok: false,
                 status: 400,
+                headers: new Headers({ 'Content-Type': 'application/json' }),
                 json: async () => ({ message: 'Custom server error' }),
             });
 
@@ -171,7 +172,9 @@ describe('Client', () => {
             mockFetch.mockResolvedValueOnce({
                 ok: false,
                 status: 500,
+                headers: new Headers({ 'Content-Type': 'text/plain' }),
                 json: async () => 'Plain text failure',
+                text: async () => 'Plain text failure',
             });
 
             const client = new Client();

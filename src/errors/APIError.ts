@@ -26,6 +26,8 @@ export class APIError extends SerchatError {
     public status: number;
     /** Raw response body. */
     public data: JsonValue;
+    /** Response headers. */
+    public headers: Record<string, string>;
     /** Full fetch response object. */
     public response?: Response;
 
@@ -41,7 +43,19 @@ export class APIError extends SerchatError {
         this.status = status;
         this.data = data;
         this.response = response;
+        this.headers = {};
         this.name = 'APIError';
+
+        if (response) {
+            const sensitiveHeaders = ['authorization', 'cookie', 'set-cookie', 'x-csrf-token'];
+            response.headers.forEach((value, key) => {
+                if (sensitiveHeaders.includes(key.toLowerCase())) {
+                    this.headers[key] = '[REDACTED]';
+                } else {
+                    this.headers[key] = value;
+                }
+            });
+        }
     }
 }
 
@@ -90,5 +104,29 @@ export class InternalServerError extends APIError {
     constructor(data: JsonValue, response?: Response) {
         super(500, data, response);
         this.name = 'InternalServerError';
+    }
+}
+
+/** Thrown when the API returns HTTP **502 Bad Gateway**. */
+export class BadGatewayError extends APIError {
+    constructor(data: JsonValue, response?: Response) {
+        super(502, data, response);
+        this.name = 'BadGatewayError';
+    }
+}
+
+/** Thrown when the API returns HTTP **503 Service Unavailable**. */
+export class ServiceUnavailableError extends APIError {
+    constructor(data: JsonValue, response?: Response) {
+        super(503, data, response);
+        this.name = 'ServiceUnavailableError';
+    }
+}
+
+/** Thrown when the API returns HTTP **504 Gateway Timeout**. */
+export class GatewayTimeoutError extends APIError {
+    constructor(data: JsonValue, response?: Response) {
+        super(504, data, response);
+        this.name = 'GatewayTimeoutError';
     }
 }

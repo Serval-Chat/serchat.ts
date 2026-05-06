@@ -1,10 +1,4 @@
-export type EmbedType =
-    | 'rich'
-    | 'image'
-    | 'video'
-    | 'gifv'
-    | 'article'
-    | 'link';
+export type EmbedType = 'rich' | 'image' | 'video' | 'gifv' | 'article' | 'link';
 
 export interface IEmbedField {
     name: string;

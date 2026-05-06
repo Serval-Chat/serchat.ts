@@ -1,4 +1,5 @@
 export * from './client/Client.js';
+export * from './client/RESTClient.js';
 export * from './builders/EmbedBuilder.js';
 export * from './builders/MermaidBuilder.js';
 export * from './types/embed.js';

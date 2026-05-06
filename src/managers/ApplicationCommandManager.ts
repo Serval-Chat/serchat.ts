@@ -1,4 +1,5 @@
 import type { RESTClient } from '@/client/RESTClient.js';
+import { unwrap } from '@/client/RESTClient.js';
 import type { JsonValue } from '@/types/json.js';
 import type { SlashCommandData } from '@/types/commands.js';
 import type { Interaction } from '@/structures/Interaction.js';
@@ -92,6 +93,6 @@ export class ApplicationCommandManager {
         const response = await this.rest.put<SlashCommandData[]>('/applications/@me/commands', {
             commands,
         } as JsonValue);
-        return response.data;
+        return unwrap(response);
     }
 }

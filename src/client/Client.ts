@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { RESTClient } from '@/client/RESTClient.js';
+import { RESTClient, unwrap } from '@/client/RESTClient.js';
 import { WebSocketManager } from '@/gateway/WebSocketManager.js';
 import { ApplicationCommandManager } from '@/managers/ApplicationCommandManager.js';
 import { StickerManager } from '@/managers/StickerManager.js';
@@ -246,7 +246,7 @@ export class Client extends EventEmitter {
     public async login(token: string, callback?: () => Promise<void>): Promise<void> {
         this.logger.info('Logging in with token...');
         this.token = token;
-        this.rest.headers['Authorization'] = `Bearer ${token}`;
+        this.rest.setDefaultHeader('Authorization', `Bearer ${token}`);
         await this.connectWS();
         if (callback) {
             await callback();
@@ -259,7 +259,7 @@ export class Client extends EventEmitter {
             client_id: clientId,
             client_secret: clientSecret,
         });
-        const token = response.data.token;
+        const token = unwrap(response).token;
         await this.login(token);
         return token;
     }
@@ -297,7 +297,7 @@ export class Client extends EventEmitter {
             `/servers/${serverId}/channels/${channelId}/messages`,
             payload as JsonValue,
         );
-        return new Message(this, response.data);
+        return new Message(this, unwrap(response));
     }
 
     /** Fetches recent messages from a channel. */
@@ -313,7 +313,7 @@ export class Client extends EventEmitter {
                 params: { limit } as Record<string, JsonValue>,
             },
         );
-        return response.data.map((m: IMessageServer) => new Message(this, m));
+        return unwrap(response).map((m: IMessageServer) => new Message(this, m));
     }
 
     /** Deletes multiple messages in a single request. */
@@ -329,7 +329,7 @@ export class Client extends EventEmitter {
                 messageIds,
             } as JsonValue,
         );
-        return response.data.deletedCount;
+        return unwrap(response).deletedCount;
     }
 
     /** Adds a reaction to a message. */
@@ -419,13 +419,13 @@ export class Client extends EventEmitter {
         const response = await this.rest.get<{ totalCount: number; onlineCount: number }>(
             `/servers/${serverId}/stats`,
         );
-        return response.data;
+        return unwrap(response);
     }
 
     /** Fetches all roles in a server. */
     public async getRoles(serverId: string): Promise<Role[]> {
         if (!this.token) throw new Error('Client is not logged in.');
         const response = await this.rest.get<Role[]>(`/servers/${serverId}/roles`);
-        return response.data;
+        return unwrap(response);
     }
 }
