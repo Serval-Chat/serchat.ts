@@ -11,12 +11,12 @@ import type { JsonValue } from '@/types/json.js';
 
 interface RESTOptions {
     baseURL: string;
-    headers?: Record<string, string>;
+    headers?: Record<string, string | undefined>;
 }
 
 export class RESTClient {
     private options: RESTOptions;
-    public headers: Record<string, string>;
+    public headers: Record<string, string | undefined>;
 
     constructor(options: RESTOptions) {
         this.options = options;
@@ -28,8 +28,8 @@ export class RESTClient {
         const response = await fetch(url, {
             ...options,
             headers: {
-                ...this.headers,
-                ...options.headers,
+                ...(this.headers as Record<string, string>),
+                ...(options.headers as Record<string, string>),
             },
         });
 
@@ -86,16 +86,17 @@ export class RESTClient {
 
     public async post<T = JsonValue>(
         path: string,
-        body?: JsonValue,
-        config?: { headers?: Record<string, string> },
+        body?: JsonValue | FormData,
+        config?: { headers?: Record<string, string | undefined> },
     ): Promise<{ data: T }> {
+        const isFormData = body instanceof FormData;
         const data = await this.request<T>(path, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                ...config?.headers,
+                ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+                ...(config?.headers as Record<string, string>),
             },
-            body: body ? JSON.stringify(body) : undefined,
+            body: isFormData ? (body as FormData) : body ? JSON.stringify(body) : undefined,
         });
         return { data };
     }

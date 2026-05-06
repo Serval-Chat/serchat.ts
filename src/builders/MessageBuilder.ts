@@ -1,6 +1,8 @@
 /** Callback used by {@link MessageBuilder.p} to build inline content. */
 export type InlineCallback = (t: InlineBuilder) => InlineBuilder;
 
+import { MermaidBuilder, type MermaidCallback } from './MermaidBuilder.js';
+
 /**
  * Builder for constructing inline Serchat markdown.
  *
@@ -63,6 +65,41 @@ export class InlineBuilder {
         return this.wrap('__', '__', text);
     }
 
+    /** Appends double-underlined text (`___text___`). */
+    public doubleUnderline(text: string): this {
+        return this.wrap('___', '___', text);
+    }
+
+    /** Appends curly-underlined text (`_~text~_`). */
+    public curlyUnderline(text: string): this {
+        return this.wrap('_~', '~_', text);
+    }
+
+    /** Appends jagged-underlined text (`_^text^_`). */
+    public jaggedUnderline(text: string): this {
+        return this.wrap('_^', '^_', text);
+    }
+
+    /** Appends doubly curly-underlined text (`_~~text~~_`). */
+    public doubleCurlyUnderline(text: string): this {
+        return this.wrap('_~~', '~~_', text);
+    }
+
+    /** Appends dashed-underlined text (`_-text-_`). */
+    public dashedUnderline(text: string): this {
+        return this.wrap('_-', '-_', text);
+    }
+
+    /** Appends dotted-underlined text (`_.text._`). */
+    public dottedUnderline(text: string): this {
+        return this.wrap('_.', '._', text);
+    }
+
+    /** Appends rhythm-underlined text (`_-.text.-_`). */
+    public rhythmUnderline(text: string): this {
+        return this.wrap('_-.', '.-_', text);
+    }
+
     /** Appends spoiler text. */
     public spoiler(text: string): this {
         return this.wrap('||', '||', text);
@@ -76,6 +113,37 @@ export class InlineBuilder {
     /** Appends inline LaTeX. */
     public inlineLatex(text: string): this {
         return this.wrap('$$', '$$', text);
+    }
+
+    /**
+     * Appends superscript text (`^text^`).
+     *
+     * @example `.superscript('2')` → `^2^`
+     */
+    public superscript(text: string): this {
+        return this.wrap('^', '^', text);
+    }
+
+    /**
+     * Appends subscript text (`~text~`).
+     *
+     * @example `.subscript('2')` → `~2~`
+     */
+    public subscript(text: string): this {
+        return this.wrap('~', '~', text);
+    }
+
+    /**
+     * Appends stacked superscript/subscript (`^sup|sub^`).
+     *
+     * @param sup - The text displayed above (superscript position).
+     * @param sub - The text displayed below (subscript position).
+     *
+     * @example `.stackedScript('top', 'bottom')` → `^top|bottom^`
+     */
+    public stackedScript(sup: string, sub: string): this {
+        this.content += `^${sup}|${sub}^`;
+        return this;
     }
 
     /** Appends a hyperlink. */
@@ -105,6 +173,12 @@ export class InlineBuilder {
     /** Appends an \@everyone mention. */
     public everyoneMention(): this {
         this.content += `<everyone>`;
+        return this;
+    }
+
+    /** Appends a server emoji. */
+    public customEmoji(id: string): this {
+        this.content += `<emoji:${id}>`;
         return this;
     }
 
@@ -246,6 +320,62 @@ export class MessageBuilder extends InlineBuilder {
     /** Appends text with a newline. */
     public appendLine(text: string = ''): this {
         this.content += text + '\n';
+        return this;
+    }
+
+    /** Appends an unordered list. */
+    public unorderedList(items: string[], depth: number = 0): this {
+        const indent = '  '.repeat(depth);
+        for (const item of items) {
+            this.content += `${indent}- ${item}\n`;
+        }
+        return this;
+    }
+
+    /** Appends an ordered list. */
+    public orderedList(items: string[], depth: number = 0): this {
+        const indent = '  '.repeat(depth);
+        for (let i = 0; i < items.length; i++) {
+            this.content += `${indent}${i + 1}. ${items[i]}\n`;
+        }
+        return this;
+    }
+
+    /** Appends a checklist. */
+    public checklist(items: { text: string; checked: boolean }[], depth: number = 0): this {
+        const indent = '  '.repeat(depth);
+        for (const item of items) {
+            this.content += `${indent}- [${item.checked ? 'x' : ' '}] ${item.text}\n`;
+        }
+        return this;
+    }
+
+    /** Appends a table. */
+    public table(headers: string[], rows: string[][]): this {
+        this.content += `| ${headers.join(' | ')} |\n`;
+        this.content += `| ${headers.map(() => '---').join(' | ')} |\n`;
+        for (const row of rows) {
+            this.content += `| ${row.join(' | ')} |\n`;
+        }
+        return this;
+    }
+
+    /** Appends a mermaid diagram. */
+    public mermaid(content: string | MermaidBuilder | MermaidCallback): this {
+        if (typeof content === 'string') {
+            return this.codeBlock('mermaid', content);
+        } else if (content instanceof MermaidBuilder) {
+            return this.codeBlock('mermaid', content.build());
+        } else {
+            const builder = new MermaidBuilder();
+            content(builder);
+            return this.codeBlock('mermaid', builder.build());
+        }
+    }
+
+    /** Appends a file. */
+    public file(url: string): this {
+        this.content += `[%file%](${url})\n`;
         return this;
     }
 }

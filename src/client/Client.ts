@@ -2,9 +2,11 @@ import { EventEmitter } from 'events';
 import { RESTClient } from '@/client/RESTClient.js';
 import { WebSocketManager } from '@/gateway/WebSocketManager.js';
 import { ApplicationCommandManager } from '@/managers/ApplicationCommandManager.js';
+import { StickerManager } from '@/managers/StickerManager.js';
 import { Message } from '@/structures/Message.js';
 import type { Interaction } from '@/structures/Interaction.js';
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
+import { MessageBuilder } from '@/builders/MessageBuilder.js';
 import type { IMessageServer, ISendMessageRequest } from '@/types/message.js';
 import { Logger, LogLevel } from '@/util/Logger.js';
 import type {
@@ -191,6 +193,8 @@ export class Client extends EventEmitter {
     public ws: WebSocketManager;
     /** Slash-command registry and dispatcher. */
     public commands: ApplicationCommandManager;
+    /** Manager for sticker endpoints. */
+    public stickers: StickerManager;
     /** The authenticated bot user, populated after the `ready` event fires. */
     public user: ClientUser | null = null;
     /** Resolved options for this client instance. */
@@ -214,6 +218,7 @@ export class Client extends EventEmitter {
 
         this.ws = new WebSocketManager(this);
         this.commands = new ApplicationCommandManager(this.rest);
+        this.stickers = new StickerManager(this.rest);
 
         this.on('interactionCreate', (interaction) => {
             void this.commands.handleInteraction(interaction).catch(console.error);
@@ -268,13 +273,15 @@ export class Client extends EventEmitter {
     public async sendMessage(
         serverId: string,
         channelId: string,
-        content: string | ISendMessageRequest | EmbedBuilder | IMessageWithEmbeds,
+        content: string | ISendMessageRequest | EmbedBuilder | IMessageWithEmbeds | MessageBuilder,
     ): Promise<Message> {
         if (!this.token) throw new Error('Client is not logged in.');
 
         let payload: ISendMessageRequest;
         if (content instanceof EmbedBuilder) {
             payload = { embeds: [content.toJSON()] };
+        } else if (content instanceof MessageBuilder) {
+            payload = { content: content.build() };
         } else if (typeof content === 'string') {
             payload = { content };
         } else {

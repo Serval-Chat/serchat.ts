@@ -4,6 +4,7 @@ import type { InteractionCreatePayload } from '@/types/events.js';
 import type { ISendMessageRequest, IMessageWithEmbeds } from '@/types/message.js';
 import type { Message } from './Message.js';
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
+import { MessageBuilder } from '@/builders/MessageBuilder.js';
 
 import type { ServerPermissions, PermissionKey } from '@/types/permissions.js';
 
@@ -93,12 +94,14 @@ export class Interaction {
 
     /** Sends a reply to this interaction. */
     public async reply(
-        content: string | ISendMessageRequest | EmbedBuilder | IMessageWithEmbeds,
+        content: string | ISendMessageRequest | EmbedBuilder | IMessageWithEmbeds | MessageBuilder,
     ): Promise<Message> {
         let payload: ISendMessageRequest;
 
         if (content instanceof EmbedBuilder) {
             payload = { embeds: [content.toJSON()] };
+        } else if (content instanceof MessageBuilder) {
+            payload = { content: content.build() };
         } else if (typeof content === 'string') {
             payload = { content };
         } else {
