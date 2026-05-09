@@ -1,4 +1,12 @@
 import type { InteractionOption } from './commands.js';
+import type { IPoll } from './message.js';
+
+export interface PollVoteUpdatePayload {
+    messageId: string;
+    poll: IPoll;
+    serverId?: string;
+    channelId?: string;
+}
 
 export interface Server {
     _id: string;

@@ -33,6 +33,7 @@ import type {
     RolesReorderedPayload,
     ChannelPermissionsUpdatedPayload,
     CategoryPermissionsUpdatedPayload,
+    PollVoteUpdatePayload,
 } from './events.js';
 import type { ClientUser } from './user.js';
 
@@ -62,6 +63,8 @@ export type WsEvent =
       }
     | { type: 'reaction_added'; payload: ReactionPayload }
     | { type: 'reaction_removed'; payload: ReactionPayload }
+    | { type: 'poll_vote_updated_server'; payload: PollVoteUpdatePayload }
+    | { type: 'poll_vote_updated_dm'; payload: PollVoteUpdatePayload }
     | { type: 'member_added'; payload: MemberAddedPayload }
     | { type: 'member_removed'; payload: MemberRemovedPayload }
     | { type: 'member_updated'; payload: MemberUpdatedPayload }

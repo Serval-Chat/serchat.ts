@@ -1,5 +1,5 @@
 import type { Client } from '@/client/Client.js';
-import type { IMessageServer, ISendMessageRequest } from '@/types/message.js';
+import type { IMessageServer, ISendMessageRequest, IPoll } from '@/types/message.js';
 import type { IEmbed } from '@/types/embed.js';
 import type { InteractionValue } from '@/types/interactions.js';
 
@@ -57,6 +57,8 @@ export class Message implements IMessageServer {
         options: { name: string; value: InteractionValue }[];
         user: { id: string; username: string };
     };
+    /** Poll attached to this message, if any. */
+    public poll?: IPoll;
 
     private client: Client;
 
@@ -84,6 +86,7 @@ export class Message implements IMessageServer {
         this.webhookAvatarUrl = data.webhookAvatarUrl;
         this.embeds = data.embeds;
         this.interaction = data.interaction;
+        this.poll = data.poll;
     }
 
     /** Sends a reply to this message. */
@@ -109,5 +112,10 @@ export class Message implements IMessageServer {
     /** Deletes this message. */
     public async delete(): Promise<void> {
         return this.client.deleteMessage(this.serverId, this.channelId, this.messageId);
+    }
+
+    /** Votes on a poll option in this message. */
+    public async vote(optionId: string): Promise<void> {
+        return this.client.votePoll(this.serverId, this.channelId, this.messageId, optionId);
     }
 }

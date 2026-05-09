@@ -151,6 +151,10 @@ export class WebSocketManager {
                 case 'reaction_removed':
                     this.client.emit('messageReactionRemove', event.payload);
                     break;
+                case 'poll_vote_updated_server':
+                case 'poll_vote_updated_dm':
+                    this.client.emit('pollVoteUpdate', event.payload);
+                    break;
                 case 'member_added':
                     this.client.emit('serverMemberAdd', event.payload);
                     break;

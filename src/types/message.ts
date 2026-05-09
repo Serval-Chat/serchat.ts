@@ -1,6 +1,22 @@
 import type { IEmbed } from './embed.js';
 import type { InteractionValue } from './interactions.js';
 
+export interface IPollOption {
+    id: string;
+    text: string;
+    emoji?: string;
+    emojiType?: 'unicode' | 'custom';
+    emojiId?: string;
+    votes: string[]; // Array of User IDs
+}
+
+export interface IPoll {
+    title: string;
+    options: IPollOption[];
+    multiSelect: boolean;
+    expiresAt?: string;
+}
+
 export interface IMessageServer {
     messageId: string;
     _id?: string;
@@ -29,6 +45,19 @@ export interface IMessageServer {
         options: { name: string; value: InteractionValue }[];
         user: { id: string; username: string };
     };
+    poll?: IPoll;
+}
+
+export interface IPollInput {
+    title: string;
+    options: {
+        text: string;
+        emoji?: string;
+        emojiType?: 'unicode' | 'custom';
+        emojiId?: string;
+    }[];
+    multiSelect?: boolean;
+    expiresAt?: string;
 }
 
 export interface ISendMessageRequest {
@@ -41,6 +70,7 @@ export interface ISendMessageRequest {
         options: { name: string; value: InteractionValue }[];
         user: { id: string; username: string };
     };
+    poll?: IPollInput | { toJSON(): IPollInput };
 }
 
 export interface IMessageWithEmbeds {

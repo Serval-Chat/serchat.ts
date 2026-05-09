@@ -7,6 +7,7 @@ import { Message } from '@/structures/Message.js';
 import type { Interaction } from '@/structures/Interaction.js';
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
 import { MessageBuilder } from '@/builders/MessageBuilder.js';
+import { PollBuilder } from '@/builders/PollBuilder.js';
 import type { IMessageServer, ISendMessageRequest } from '@/types/message.js';
 import { Logger, LogLevel } from '@/util/Logger.js';
 import type {
@@ -43,6 +44,7 @@ import type {
     CategoryPermissionsUpdatedPayload,
     PresenceSyncPayload,
     MessageBulkDeletePayload,
+    PollVoteUpdatePayload,
 } from '@/types/events.js';
 import type { JsonValue } from '@/types/json.js';
 import type { IMessageWithEmbeds } from '@/types/message.js';
@@ -88,6 +90,8 @@ export interface ClientEvents {
     messageReactionAdd: [ReactionPayload];
     /** A reaction was removed from a message. */
     messageReactionRemove: [ReactionPayload];
+    /** A poll vote was updated. */
+    pollVoteUpdate: [PollVoteUpdatePayload];
     /** A member joined a server. */
     serverMemberAdd: [MemberAddedPayload];
     /** A member left or was removed from a server. */
@@ -273,7 +277,13 @@ export class Client extends EventEmitter {
     public async sendMessage(
         serverId: string,
         channelId: string,
-        content: string | ISendMessageRequest | EmbedBuilder | IMessageWithEmbeds | MessageBuilder,
+        content:
+            | string
+            | ISendMessageRequest
+            | EmbedBuilder
+            | IMessageWithEmbeds
+            | MessageBuilder
+            | PollBuilder,
     ): Promise<Message> {
         if (!this.token) throw new Error('Client is not logged in.');
 
@@ -282,6 +292,8 @@ export class Client extends EventEmitter {
             payload = { embeds: [content.toJSON()] };
         } else if (content instanceof MessageBuilder) {
             payload = { content: content.build() };
+        } else if (content instanceof PollBuilder) {
+            payload = { poll: content.toJSON() };
         } else if (typeof content === 'string') {
             payload = { content };
         } else {
@@ -291,6 +303,9 @@ export class Client extends EventEmitter {
                     e instanceof EmbedBuilder ? e.toJSON() : e,
                 );
             }
+            if (payload.poll && 'toJSON' in payload.poll) {
+                payload.poll = payload.poll.toJSON();
+            }
         }
 
         const response = await this.rest.post<IMessageServer>(
@@ -298,6 +313,20 @@ export class Client extends EventEmitter {
             payload as JsonValue,
         );
         return new Message(this, unwrap(response));
+    }
+
+    /** Votes on a poll option. */
+    public async votePoll(
+        serverId: string,
+        channelId: string,
+        messageId: string,
+        optionId: string,
+    ): Promise<void> {
+        if (!this.token) throw new Error('Client is not logged in.');
+        await this.rest.post(
+            `/servers/${serverId}/channels/${channelId}/messages/${messageId}/poll/vote`,
+            { id: optionId },
+        );
     }
 
     /** Fetches recent messages from a channel. */
