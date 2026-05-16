@@ -151,4 +151,28 @@ export class WebhookManager {
         );
         return unwrap(response);
     }
+
+    /**
+     * Edits a previously sent webhook message.
+     */
+    public async editWebhookMessage(
+        token: string,
+        messageId: string,
+        data: IExecuteWebhookRequest,
+    ): Promise<void> {
+        const payload: JsonObject = {
+            content: data.content,
+            username: data.username,
+            avatarUrl: data.avatarUrl,
+            embeds: data.embeds?.map((embed) => this.embedToJSON(embed)),
+        };
+        await this.rest.patch(`/webhooks/${token}/messages/${messageId}`, payload);
+    }
+
+    /**
+     * Deletes a previously sent webhook message.
+     */
+    public async deleteWebhookMessage(token: string, messageId: string): Promise<void> {
+        await this.rest.delete(`/webhooks/${token}/messages/${messageId}`);
+    }
 }

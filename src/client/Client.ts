@@ -444,6 +444,18 @@ export class Client extends EventEmitter {
         await this.rest.patch(`/servers/${serverId}/channels/${channelId}`, data);
     }
 
+    /** Retrieves channel statistics. */
+    public async getChannelStats(
+        serverId: string,
+        channelId: string,
+    ): Promise<{ messageCount: number; channelName: string }> {
+        if (!this.token) throw new Error('Client is not logged in.');
+        const response = await this.rest.get<{ messageCount: number; channelName: string }>(
+            `/servers/${serverId}/channels/${channelId}/stats`,
+        );
+        return unwrap(response);
+    }
+
     /** Retrieves server statistics. */
     public async getServerStats(
         serverId: string,
