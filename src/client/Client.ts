@@ -3,6 +3,7 @@ import { RESTClient, unwrap } from '@/client/RESTClient.js';
 import { WebSocketManager } from '@/gateway/WebSocketManager.js';
 import { ApplicationCommandManager } from '@/managers/ApplicationCommandManager.js';
 import { StickerManager } from '@/managers/StickerManager.js';
+import { WebhookManager } from '@/managers/WebhookManager.js';
 import { Message } from '@/structures/Message.js';
 import type { Interaction } from '@/structures/Interaction.js';
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
@@ -199,6 +200,8 @@ export class Client extends EventEmitter {
     public commands: ApplicationCommandManager;
     /** Manager for sticker endpoints. */
     public stickers: StickerManager;
+    /** Manager for webhook endpoints. */
+    public webhooks: WebhookManager;
     /** The authenticated bot user, populated after the `ready` event fires. */
     public user: ClientUser | null = null;
     /** Resolved options for this client instance. */
@@ -223,6 +226,7 @@ export class Client extends EventEmitter {
         this.ws = new WebSocketManager(this);
         this.commands = new ApplicationCommandManager(this.rest);
         this.stickers = new StickerManager(this.rest);
+        this.webhooks = new WebhookManager(this.rest);
 
         this.on('interactionCreate', (interaction) => {
             void this.commands.handleInteraction(interaction).catch(console.error);

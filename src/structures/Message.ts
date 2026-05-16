@@ -1,5 +1,10 @@
 import type { Client } from '@/client/Client.js';
-import type { IMessageServer, ISendMessageRequest, IPoll } from '@/types/message.js';
+import type {
+    IMessageAttachment,
+    IMessageServer,
+    ISendMessageRequest,
+    IPoll,
+} from '@/types/message.js';
 import type { IEmbed } from '@/types/embed.js';
 import type { InteractionValue } from '@/types/interactions.js';
 
@@ -51,6 +56,8 @@ export class Message implements IMessageServer {
     public webhookAvatarUrl?: string;
     /** Rich embed objects attached to this message. */
     public embeds?: IEmbed[];
+    /** Structured file attachments on this message. */
+    public attachments?: IMessageAttachment[];
     /** Interaction metadata if this message was sent in response to a slash command. */
     public interaction?: {
         command: string;
@@ -85,6 +92,7 @@ export class Message implements IMessageServer {
         this.webhookUsername = data.webhookUsername;
         this.webhookAvatarUrl = data.webhookAvatarUrl;
         this.embeds = data.embeds;
+        this.attachments = data.attachments;
         this.interaction = data.interaction;
         this.poll = data.poll;
     }

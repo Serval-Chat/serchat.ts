@@ -20,6 +20,11 @@ describe('Client', () => {
         expect(client.options.apiBaseUrl).toBe('https://api.example.com');
     });
 
+    it('should expose a webhook manager', () => {
+        const client = new Client();
+        expect(client.webhooks).toBeDefined();
+    });
+
     describe('login', () => {
         it('should set Authorization header in REST client', async () => {
             const client = new Client();

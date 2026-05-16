@@ -17,6 +17,19 @@ export interface IPoll {
     expiresAt?: string;
 }
 
+export type MessageAttachmentType = 'image' | 'video' | 'audio' | 'text' | 'file';
+
+export interface IMessageAttachment {
+    attachmentId: string;
+    type: MessageAttachmentType;
+    mimeType: string;
+    name: string;
+    size: number;
+    width?: number;
+    height?: number;
+    spoiler?: boolean;
+}
+
 export interface IMessageServer {
     messageId: string;
     _id?: string;
@@ -40,6 +53,7 @@ export interface IMessageServer {
     webhookUsername?: string;
     webhookAvatarUrl?: string;
     embeds?: IEmbed[];
+    attachments?: IMessageAttachment[];
     interaction?: {
         command: string;
         options: { name: string; value: InteractionValue }[];
@@ -65,6 +79,7 @@ export interface ISendMessageRequest {
     text?: string;
     replyToId?: string;
     embeds?: IEmbed[];
+    attachments?: IMessageAttachment[];
     interaction?: {
         command: string;
         options: { name: string; value: InteractionValue }[];

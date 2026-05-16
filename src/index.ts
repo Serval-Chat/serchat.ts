@@ -11,6 +11,7 @@ export * from './types/interactions.js';
 export * from './types/permissions.js';
 export * from './types/user.js';
 export * from './types/ws.js';
+export * from './types/webhooks.js';
 export * from './types/json.js';
 export * from './structures/Message.js';
 export * from './structures/Interaction.js';
@@ -18,6 +19,7 @@ export { BotCommand, type CommandOption, type CommandOptionType } from './struct
 export type { Interaction as CommandInteraction } from './structures/Interaction.js';
 export * from './managers/ApplicationCommandManager.js';
 export * from './managers/StickerManager.js';
+export * from './managers/WebhookManager.js';
 
 export * from './builders/MessageBuilder.js';
 export * from './errors/APIError.js';
