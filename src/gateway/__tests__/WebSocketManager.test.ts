@@ -236,4 +236,47 @@ describe('WebSocketManager', () => {
         expect(WebSocket).toHaveBeenCalledTimes(2);
         vi.useRealTimers();
     });
+
+    it('should emit ready on first authentication and reconnected on subsequent authentications', async () => {
+        const connectPromise = manager.connect();
+
+        const openCallback = mockWs.on.mock.calls.find(
+            (c: unknown[]) => c[0] === 'open',
+        )?.[1] as () => void;
+        openCallback();
+
+        const emitSpy = vi.spyOn(client, 'emit');
+
+        const messageCallback = mockWs.on.mock.calls.find(
+            (c: unknown[]) => c[0] === 'message',
+        )?.[1] as (payload: string) => void;
+
+        messageCallback(
+            JSON.stringify({
+                event: {
+                    type: 'authenticated',
+                    payload: { user: { id: 'bot-1', username: 'Bot' } },
+                },
+            }),
+        );
+        await connectPromise;
+        expect(client.isReady).toBe(true);
+        expect(emitSpy).toHaveBeenCalledWith('ready', expect.anything());
+        expect(emitSpy).not.toHaveBeenCalledWith('reconnected');
+
+        emitSpy.mockClear();
+
+        messageCallback(
+            JSON.stringify({
+                event: {
+                    type: 'authenticated',
+                    payload: { user: { id: 'bot-1', username: 'Bot' } },
+                },
+            }),
+        );
+
+        expect(client.isReady).toBe(true);
+        expect(emitSpy).not.toHaveBeenCalledWith('ready', expect.anything());
+        expect(emitSpy).toHaveBeenCalledWith('reconnected');
+    });
 });

@@ -103,7 +103,13 @@ export class WebSocketManager {
                 this.client.logger.info(
                     `Authenticated as ${msg.event.payload.user.username} (${msg.event.payload.user.id})`,
                 );
-                this.client.emit('ready', msg.event.payload.user);
+
+                if (!this.client.isReady) {
+                    this.client.isReady = true;
+                    this.client.emit('ready', msg.event.payload.user);
+                } else {
+                    this.client.emit('reconnected');
+                }
             }
 
             if (msg.meta?.replyTo && this.pendingRequests.has(msg.meta.replyTo)) {
@@ -264,11 +270,17 @@ export class WebSocketManager {
             }
         });
 
-        this.ws.on('close', () => {
-            this.client.logger.warn('WebSocket connection closed.');
+        this.ws.on('close', (code, reason) => {
+            this.client.logger.warn(
+                `WebSocket connection closed. Code: ${code}, Reason: ${reason ? reason.toString() : 'None'}`,
+            );
             this.client.emit('disconnect');
             if (this.connectionReject) {
-                this.connectionReject(new Error('WebSocket closed before authentication.'));
+                this.connectionReject(
+                    new Error(
+                        `WebSocket closed before authentication. Code: ${code}, Reason: ${reason ? reason.toString() : 'None'}`,
+                    ),
+                );
                 this.connectionPromise = null;
                 this.connectionResolve = null;
                 this.connectionReject = null;

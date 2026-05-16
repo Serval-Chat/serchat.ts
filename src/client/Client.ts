@@ -157,6 +157,8 @@ export interface ClientEvents {
     error: [Error];
     /** The WebSocket connection was closed. */
     disconnect: [];
+    /** The WebSocket connection successfully reconnected. */
+    reconnected: [];
 }
 
 /**
@@ -204,6 +206,8 @@ export class Client extends EventEmitter {
     public webhooks: WebhookManager;
     /** The authenticated bot user, populated after the `ready` event fires. */
     public user: ClientUser | null = null;
+    /** Whether the client has emitted the ready event at least once. */
+    public isReady: boolean = false;
     /** Resolved options for this client instance. */
     public options: ClientOptions;
     /** Logger instance used throughout the SDK. */
@@ -248,6 +252,15 @@ export class Client extends EventEmitter {
     /** Returns the internal REST client. */
     public getRest(): RESTClient {
         return this.rest;
+    }
+
+    /** Returns the origin of the API base URL (e.g. https://rolling.catfla.re). */
+    public getApiOrigin(): string {
+        try {
+            return new URL(this.options.apiBaseUrl as string).origin;
+        } catch {
+            return this.options.apiBaseUrl as string;
+        }
     }
 
     /** Authenticates the client and connects to the gateway. */
@@ -444,6 +457,13 @@ export class Client extends EventEmitter {
         await this.rest.patch(`/servers/${serverId}/channels/${channelId}`, data);
     }
 
+    /** Retrieves a server's details. */
+    public async getServer(serverId: string): Promise<Record<string, JsonValue>> {
+        if (!this.token) throw new Error('Client is not logged in.');
+        const response = await this.rest.get<Record<string, JsonValue>>(`/servers/${serverId}`);
+        return unwrap(response);
+    }
+
     /** Retrieves channel statistics. */
     public async getChannelStats(
         serverId: string,
@@ -472,5 +492,69 @@ export class Client extends EventEmitter {
         if (!this.token) throw new Error('Client is not logged in.');
         const response = await this.rest.get<Role[]>(`/servers/${serverId}/roles`);
         return unwrap(response);
+    }
+
+    /** Checks if a user has a specific permission in a server. */
+    public async hasPermission(
+        serverId: string,
+        userId: string,
+        permission: string,
+    ): Promise<boolean> {
+        try {
+            const server = await this.getServer(serverId);
+            if (server && (server.ownerId === userId || server._id === userId)) return true;
+
+            const [memberResp, roles] = await Promise.all([
+                this.rest.get<Record<string, JsonValue>>(`/servers/${serverId}/members/${userId}`),
+                this.getRoles(serverId),
+            ]);
+            const memberObj = unwrap(memberResp);
+
+            const memberRoleIds: string[] =
+                memberObj && typeof memberObj === 'object' && 'roles' in memberObj
+                    ? ((memberObj as Record<string, JsonValue>).roles as string[])
+                    : memberObj && typeof memberObj === 'object' && 'member' in memberObj
+                      ? ((
+                            (memberObj as Record<string, JsonValue>).member as Record<
+                                string,
+                                JsonValue
+                            >
+                        ).roles as string[])
+                      : [];
+
+            if (!Array.isArray(memberRoleIds)) return false;
+
+            const everyoneRole = roles.find((r) => r.name === '@everyone');
+            const roleIdsSet = new Set(memberRoleIds);
+            if (everyoneRole) roleIdsSet.add(everyoneRole.id || everyoneRole._id);
+
+            const userRoles = roles
+                .filter((r) => roleIdsSet.has(r.id || r._id))
+                .sort((a, b) => a.position - b.position);
+
+            for (const role of userRoles) {
+                const perms =
+                    typeof role.permissions === 'string'
+                        ? JSON.parse(role.permissions)
+                        : role.permissions;
+                if (perms && perms.administrator === true) return true;
+            }
+
+            let hasPerm = false;
+            for (const role of userRoles) {
+                const perms =
+                    typeof role.permissions === 'string'
+                        ? JSON.parse(role.permissions)
+                        : role.permissions;
+                if (perms && typeof perms[permission] === 'boolean') {
+                    hasPerm = perms[permission];
+                }
+            }
+
+            return hasPerm;
+        } catch (e) {
+            this.logger.error(`Failed to check permission: ${e}`);
+        }
+        return false;
     }
 }
