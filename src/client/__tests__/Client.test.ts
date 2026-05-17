@@ -135,6 +135,10 @@ describe('Client', () => {
             const result = await client.sendMessage('server-1', 'channel-1', {
                 content: 'Custom Payload',
                 replyToId: 'msg-2',
+                noEmbedsUrls: Array.from(
+                    { length: 26 },
+                    (_, index) => `https://example.com/${index}`,
+                ),
             });
 
             expect(mockFetch).toHaveBeenCalledWith(
@@ -144,6 +148,10 @@ describe('Client', () => {
                     body: JSON.stringify({
                         content: 'Custom Payload',
                         replyToId: 'msg-2',
+                        noEmbedsUrls: Array.from(
+                            { length: 25 },
+                            (_, index) => `https://example.com/${index}`,
+                        ),
                     }),
                 }),
             );

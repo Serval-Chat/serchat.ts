@@ -320,6 +320,9 @@ export class Client extends EventEmitter {
                     e instanceof EmbedBuilder ? e.toJSON() : e,
                 );
             }
+            if (payload.noEmbedsUrls) {
+                payload.noEmbedsUrls = payload.noEmbedsUrls.slice(0, 25);
+            }
             if (payload.poll && 'toJSON' in payload.poll) {
                 payload.poll = payload.poll.toJSON();
             }

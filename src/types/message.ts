@@ -79,6 +79,7 @@ export interface ISendMessageRequest {
     content?: string;
     text?: string;
     replyToId?: string;
+    noEmbedsUrls?: string[];
     embeds?: IEmbed[];
     attachments?: IMessageAttachment[];
     interaction?: {

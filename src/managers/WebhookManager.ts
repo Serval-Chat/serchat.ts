@@ -143,6 +143,7 @@ export class WebhookManager {
             content: data.content,
             username: data.username,
             avatarUrl: data.avatarUrl,
+            noEmbedsUrls: data.noEmbedsUrls?.slice(0, 25),
             embeds: data.embeds?.map((embed) => this.embedToJSON(embed)),
         };
         const response = await this.rest.post<IExecuteWebhookResponse>(
@@ -164,6 +165,7 @@ export class WebhookManager {
             content: data.content,
             username: data.username,
             avatarUrl: data.avatarUrl,
+            noEmbedsUrls: data.noEmbedsUrls?.slice(0, 25),
             embeds: data.embeds?.map((embed) => this.embedToJSON(embed)),
         };
         await this.rest.patch(`/webhooks/${token}/messages/${messageId}`, payload);

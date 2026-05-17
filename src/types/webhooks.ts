@@ -20,6 +20,7 @@ export interface IExecuteWebhookRequest {
     content?: string;
     username?: string;
     avatarUrl?: string;
+    noEmbedsUrls?: string[];
     embeds?: IEmbed[];
 }
 
