@@ -12,7 +12,7 @@ describe('Client', () => {
 
     it('should create client with default base URL', () => {
         const client = new Client();
-        expect(client.options.apiBaseUrl).toBe('https://rolling.catfla.re/api/v1');
+        expect(client.options.apiBaseUrl).toBe('https://ser.chat/api/v1');
     });
 
     it('should create client with custom base URL', () => {
@@ -47,7 +47,7 @@ describe('Client', () => {
             const token = await client.loginWithSecret('client-id', 'client-secret');
 
             expect(mockFetch).toHaveBeenCalledWith(
-                'https://rolling.catfla.re/api/v1/bots/token',
+                'https://ser.chat/api/v1/bots/token',
                 expect.objectContaining({
                     method: 'POST',
                     body: JSON.stringify({
@@ -83,7 +83,7 @@ describe('Client', () => {
             const result = await client.sendMessage('server-1', 'channel-1', 'Hello');
 
             expect(mockFetch).toHaveBeenCalledWith(
-                'https://rolling.catfla.re/api/v1/servers/server-1/channels/channel-1/messages',
+                'https://ser.chat/api/v1/servers/server-1/channels/channel-1/messages',
                 expect.objectContaining({
                     method: 'POST',
                     body: JSON.stringify({
@@ -110,7 +110,7 @@ describe('Client', () => {
             const result = await client.sendMessage('server-1', 'channel-1', embed);
 
             expect(mockFetch).toHaveBeenCalledWith(
-                'https://rolling.catfla.re/api/v1/servers/server-1/channels/channel-1/messages',
+                'https://ser.chat/api/v1/servers/server-1/channels/channel-1/messages',
                 expect.objectContaining({
                     method: 'POST',
                     body: JSON.stringify({
@@ -138,7 +138,7 @@ describe('Client', () => {
             });
 
             expect(mockFetch).toHaveBeenCalledWith(
-                'https://rolling.catfla.re/api/v1/servers/server-1/channels/channel-1/messages',
+                'https://ser.chat/api/v1/servers/server-1/channels/channel-1/messages',
                 expect.objectContaining({
                     method: 'POST',
                     body: JSON.stringify({

@@ -59,7 +59,7 @@ export class WebSocketManager {
             return;
         }
 
-        const baseUrl = this.client.options.apiBaseUrl || 'https://rolling.catfla.re/api/v1';
+        const baseUrl = this.client.options.apiBaseUrl || 'https://ser.chat/api/v1';
         const wsUrl = baseUrl.replace(/^http/, 'ws').replace(/\/api\/v1\/?$/, '/ws');
 
         this.client.logger.info(`Connecting to WebSocket at ${wsUrl}...`);

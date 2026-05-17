@@ -4,6 +4,7 @@ import type {
     IMessageServer,
     ISendMessageRequest,
     IPoll,
+    MessageAttachmentType,
 } from '@/types/message.js';
 import type { IEmbed } from '@/types/embed.js';
 import type { InteractionValue } from '@/types/interactions.js';
@@ -125,5 +126,21 @@ export class Message implements IMessageServer {
     /** Votes on a poll option in this message. */
     public async vote(optionId: string): Promise<void> {
         return this.client.votePoll(this.serverId, this.channelId, this.messageId, optionId);
+    }
+
+    /** Checks if this message has any attachments. */
+    public hasAttachments(): boolean {
+        return Array.isArray(this.attachments) && this.attachments.length > 0;
+    }
+
+    /** Resolves the full public download URL of the given attachment. */
+    public getAttachmentUrl(attachment: IMessageAttachment): string {
+        return `${this.client.getApiOrigin()}/api/v1/files/download/${encodeURIComponent(attachment.attachmentId)}`;
+    }
+
+    /** Filters and returns attachments belonging to a specific file/media type. */
+    public getAttachmentsByType(type: MessageAttachmentType): IMessageAttachment[] {
+        if (!this.attachments) return [];
+        return this.attachments.filter((att) => att.type === type);
     }
 }

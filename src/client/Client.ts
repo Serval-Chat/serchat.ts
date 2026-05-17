@@ -56,7 +56,7 @@ import type { IMessageWithEmbeds } from '@/types/message.js';
 export interface ClientOptions {
     /**
      * Base URL of the Serchat REST API.
-     * @defaultValue `'https://rolling.catfla.re/api/v1'`
+     * @defaultValue `'https://ser.chat/api/v1'`
      */
     apiBaseUrl?: string;
     /**
@@ -218,7 +218,7 @@ export class Client extends EventEmitter {
     constructor(options: ClientOptions = {}) {
         super();
         this.options = {
-            apiBaseUrl: 'https://rolling.catfla.re/api/v1',
+            apiBaseUrl: 'https://ser.chat/api/v1',
             logLevel: LogLevel.INFO,
             ...options,
         };
@@ -254,7 +254,7 @@ export class Client extends EventEmitter {
         return this.rest;
     }
 
-    /** Returns the origin of the API base URL (e.g. https://rolling.catfla.re). */
+    /** Returns the origin of the API base URL (e.g. https://ser.chat). */
     public getApiOrigin(): string {
         try {
             return new URL(this.options.apiBaseUrl as string).origin;
