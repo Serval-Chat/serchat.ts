@@ -60,6 +60,7 @@ export interface IMessageServer {
         user: { id: string; username: string };
     };
     poll?: IPoll;
+    stickerId?: string;
 }
 
 export interface IPollInput {

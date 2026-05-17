@@ -67,6 +67,8 @@ export class Message implements IMessageServer {
     };
     /** Poll attached to this message, if any. */
     public poll?: IPoll;
+    /** Sticker attached to this message, if any. */
+    public stickerId?: string;
 
     private client: Client;
 
@@ -96,6 +98,7 @@ export class Message implements IMessageServer {
         this.attachments = data.attachments;
         this.interaction = data.interaction;
         this.poll = data.poll;
+        this.stickerId = data.stickerId;
     }
 
     /** Sends a reply to this message. */
