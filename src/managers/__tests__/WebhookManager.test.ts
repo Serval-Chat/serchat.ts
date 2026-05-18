@@ -132,4 +132,37 @@ describe('WebhookManager', () => {
         );
         expect(response.id).toBe('message-1');
     });
+
+    it('edits a webhook message by token', async () => {
+        mockFetch.mockResolvedValueOnce(createMockResponse({ message: 'Webhook message edited' }));
+
+        await manager.editWebhookMessage('token', 'message-1', {
+            content: 'Build updated',
+            username: 'CI',
+            noEmbedsUrls: Array.from({ length: 30 }, (_, i) => `https://example.com/${i}`),
+        });
+
+        expect(mockFetch).toHaveBeenCalledWith(
+            'https://api.example.com/api/v1/webhooks/token/messages/message-1',
+            expect.objectContaining({
+                method: 'PATCH',
+                body: JSON.stringify({
+                    content: 'Build updated',
+                    username: 'CI',
+                    noEmbedsUrls: Array.from({ length: 25 }, (_, i) => `https://example.com/${i}`),
+                }),
+            }),
+        );
+    });
+
+    it('deletes a webhook message by token', async () => {
+        mockFetch.mockResolvedValueOnce(createMockResponse({ message: 'Webhook message deleted' }));
+
+        await manager.deleteWebhookMessage('token', 'message-1');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+            'https://api.example.com/api/v1/webhooks/token/messages/message-1',
+            expect.objectContaining({ method: 'DELETE' }),
+        );
+    });
 });
