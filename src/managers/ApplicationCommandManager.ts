@@ -20,6 +20,8 @@ export class ApplicationCommandManager {
     private rest: RESTClient;
     /** Map of command name → {@link BotCommand} instance. */
     private registeredCommands = new Map<string, BotCommand>();
+    /** Map of command ID → {@link BotCommand} instance. */
+    private registeredCommandsById = new Map<string, BotCommand>();
 
     /**
      * @param rest - Authenticated REST client used to push commands to the API.
@@ -49,7 +51,12 @@ export class ApplicationCommandManager {
      * @param interaction - The interaction to dispatch.
      */
     public async handleInteraction(interaction: Interaction): Promise<void> {
-        const command = this.registeredCommands.get(interaction.command);
+        let command: BotCommand | undefined;
+        if (interaction.commandId) {
+            command = this.registeredCommandsById.get(interaction.commandId);
+        } else {
+            command = this.registeredCommands.get(interaction.command);
+        }
         if (command) {
             await command.execute(interaction);
         }
@@ -93,6 +100,17 @@ export class ApplicationCommandManager {
         const response = await this.rest.put<SlashCommandData[]>('/applications/@me/commands', {
             commands,
         } as JsonValue);
-        return unwrap(response);
+        const apiCommands = unwrap(response);
+
+        this.registeredCommandsById.clear();
+        for (const apiCmd of apiCommands) {
+            const localCmd = this.registeredCommands.get(apiCmd.name);
+            if (localCmd && apiCmd.id) {
+                localCmd.id = apiCmd.id;
+                this.registeredCommandsById.set(apiCmd.id, localCmd);
+            }
+        }
+
+        return apiCommands;
     }
 }

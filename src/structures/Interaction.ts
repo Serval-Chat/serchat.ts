@@ -17,6 +17,8 @@ import type { ServerPermissions, PermissionKey } from '@/types/permissions.js';
 export class Interaction {
     /** Name of the slash command that was invoked (e.g. `"ping"`). */
     public command: string;
+    /** Unique ID of the slash command, if provided. */
+    public commandId?: string;
     /** Raw list of option values provided by the user. */
     public options: InteractionOption[];
     /** ID of the server where the interaction occurred. */
@@ -37,6 +39,7 @@ export class Interaction {
     constructor(client: Client, data: InteractionCreatePayload) {
         this.client = client;
         this.command = data.command;
+        this.commandId = data.commandId;
         this.options = data.options;
         this.serverId = data.serverId;
         this.channelId = data.channelId;

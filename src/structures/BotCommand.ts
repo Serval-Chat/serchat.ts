@@ -34,6 +34,8 @@ export interface CommandOption {
  * ```
  */
 export abstract class BotCommand {
+    /** The unique command ID populated after registration sync. */
+    public id?: string;
     /** The command name as it appears in the slash-command picker (lowercase, no spaces). */
     public abstract name: string;
     /** Short description displayed in the command picker UI. */

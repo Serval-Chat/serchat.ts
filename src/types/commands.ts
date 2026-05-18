@@ -17,6 +17,7 @@ export interface SlashCommandOption extends JsonObject {
 }
 
 export interface SlashCommandData extends JsonObject {
+    id?: string;
     name: string;
     description: string;
     options?: SlashCommandOption[];

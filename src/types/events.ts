@@ -186,6 +186,7 @@ export interface InteractionCreatePayload {
     senderPermissions?: ServerPermissions;
     user?: { id: string; username: string };
     invocationId?: string;
+    commandId?: string;
 }
 
 export interface ServerJoinedPayload {

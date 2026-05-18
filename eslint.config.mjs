@@ -2,7 +2,6 @@ import globals from "globals";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import prettierConfig from "eslint-config-prettier";
-import noRelativeImportPaths from "eslint-plugin-no-relative-import-paths";
 
 export default [
   {
@@ -19,8 +18,7 @@ export default [
       }
     },
     plugins: {
-      "@typescript-eslint": tseslint,
-      "no-relative-import-paths": noRelativeImportPaths
+      "@typescript-eslint": tseslint
     },
     rules: {
       "no-unused-vars": "off",
@@ -36,18 +34,17 @@ export default [
       "@typescript-eslint/no-floating-promises": "warn",
       "@typescript-eslint/no-misused-promises": "warn",
       "@typescript-eslint/await-thenable": "warn",
-      "no-relative-import-paths/no-relative-import-paths": [
-        "error",
-        { "allowSameFolder": true, "rootDir": "src", "prefix": "@" }
-      ],
       "no-restricted-syntax": [
         "error",
+        {
+          "selector": "ImportDeclaration[source.value=/^\\.\\.\\//]",
+          "message": "Relative imports from parent folders (../) are disallowed. Use path-mapped imports starting with '@/' instead."
+        },
         {
           "selector": "TSUnknownKeyword",
           "message": "Usage of 'unknown' is disallowed in types. Use concrete types or union types instead."
         }
       ]
-
     }
   },
   {
