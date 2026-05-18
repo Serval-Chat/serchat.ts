@@ -36,7 +36,7 @@ export default [
       "@typescript-eslint/await-thenable": "warn",
       "no-restricted-syntax": [
         "error",
-        {
+        { 
           "selector": "ImportDeclaration[source.value=/^\\.\\.\\//]",
           "message": "Relative imports from parent folders (../) are disallowed. Use path-mapped imports starting with '@/' instead."
         },
