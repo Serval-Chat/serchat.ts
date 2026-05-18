@@ -29,6 +29,11 @@ export class WebSocketManager {
     private connectionPromise: Promise<void> | null = null;
     private connectionResolve: (() => void) | null = null;
     private connectionReject: ((err: Error) => void) | null = null;
+    private heartbeatInterval: NodeJS.Timeout | null = null;
+    private heartbeatTimeout: NodeJS.Timeout | null = null;
+    private heartbeatRequestId: string | null = null;
+    private readonly heartbeatIntervalMs = 30000;
+    private readonly heartbeatTimeoutMs = 10000;
 
     /** Establishes the WebSocket connection. */
     public async connect(): Promise<void> {
@@ -65,6 +70,7 @@ export class WebSocketManager {
         this.client.logger.info(`Connecting to WebSocket at ${wsUrl}...`);
 
         if (this.ws) {
+            this.stopHeartbeat();
             this.ws.removeAllListeners();
             this.ws.close();
         }
@@ -95,6 +101,7 @@ export class WebSocketManager {
             if (msg.event?.type === 'authenticated' && msg.event.payload) {
                 this.client.user = msg.event.payload.user;
                 this.reconnectAttempts = 0;
+                this.startHeartbeat();
                 if (this.connectionResolve) {
                     this.connectionResolve();
                     this.connectionResolve = null;
@@ -110,6 +117,10 @@ export class WebSocketManager {
                 } else {
                     this.client.emit('reconnected');
                 }
+            }
+
+            if (msg.event?.type === 'pong') {
+                this.handleHeartbeatPong(msg);
             }
 
             if (msg.meta?.replyTo && this.pendingRequests.has(msg.meta.replyTo)) {
@@ -262,6 +273,7 @@ export class WebSocketManager {
 
         this.ws.on('error', (err) => {
             this.client.logger.error(`WebSocket error: ${err.message}`);
+            this.stopHeartbeat();
             if (this.connectionReject) {
                 this.connectionReject(err);
                 this.connectionPromise = null;
@@ -271,6 +283,7 @@ export class WebSocketManager {
         });
 
         this.ws.on('close', (code, reason) => {
+            this.stopHeartbeat();
             this.client.logger.warn(
                 `WebSocket connection closed. Code: ${code}, Reason: ${reason ? reason.toString() : 'None'}`,
             );
@@ -287,6 +300,63 @@ export class WebSocketManager {
             }
             this.scheduleReconnect();
         });
+    }
+
+    private startHeartbeat(): void {
+        this.stopHeartbeat();
+        this.heartbeatInterval = setInterval(() => {
+            this.sendHeartbeat();
+        }, this.heartbeatIntervalMs);
+        this.heartbeatInterval.unref();
+        this.sendHeartbeat();
+    }
+
+    private stopHeartbeat(): void {
+        if (this.heartbeatInterval !== null) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
+        if (this.heartbeatTimeout !== null) {
+            clearTimeout(this.heartbeatTimeout);
+            this.heartbeatTimeout = null;
+        }
+        this.heartbeatRequestId = null;
+    }
+
+    private sendHeartbeat(): void {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        if (this.heartbeatRequestId !== null) return;
+
+        const id = crypto.randomUUID();
+        this.heartbeatRequestId = id;
+        this.ws.send(
+            JSON.stringify({
+                id,
+                event: {
+                    type: 'ping',
+                    payload: {},
+                },
+            }),
+        );
+
+        this.heartbeatTimeout = setTimeout(() => {
+            this.client.logger.warn('WebSocket heartbeat timed out; reconnecting...');
+            this.heartbeatTimeout = null;
+            this.heartbeatRequestId = null;
+            this.ws?.terminate();
+        }, this.heartbeatTimeoutMs);
+        this.heartbeatTimeout.unref();
+    }
+
+    private handleHeartbeatPong(msg: IWsIncomingMessage): void {
+        if (this.heartbeatRequestId === null) return;
+        if (msg.meta?.replyTo !== this.heartbeatRequestId) return;
+
+        this.heartbeatRequestId = null;
+        if (this.heartbeatTimeout !== null) {
+            clearTimeout(this.heartbeatTimeout);
+            this.heartbeatTimeout = null;
+        }
     }
 
     /** Reconnects with exponential backoff. */

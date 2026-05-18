@@ -14,6 +14,7 @@ describe('WebSocketManager', () => {
         on: ReturnType<typeof vi.fn>;
         send: ReturnType<typeof vi.fn>;
         close: ReturnType<typeof vi.fn>;
+        terminate: ReturnType<typeof vi.fn>;
         removeAllListeners: ReturnType<typeof vi.fn>;
         readyState: number;
     };
@@ -26,6 +27,7 @@ describe('WebSocketManager', () => {
             on: vi.fn(),
             send: vi.fn(),
             close: vi.fn(),
+            terminate: vi.fn(),
             removeAllListeners: vi.fn(),
             readyState: 1, // OPEN
         };
