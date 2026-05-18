@@ -2,8 +2,19 @@
   "name": "serchat.ts",
   "version": "0.1.0",
   "description": "TypeScript SDK for Serchat",
+  "author": "Serchat",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "sideEffects": false,
   "scripts": {
@@ -31,23 +42,23 @@
     "ws": "^8.14.0"
   },
   "devDependencies": {
-    "@types/node": "^20.8.0",
-    "@types/ws": "^8.5.0",
-    "@typescript-eslint/eslint-plugin": "^8.58.2",
-    "@typescript-eslint/parser": "^8.58.2",
+    "@types/node": "^25.9.0",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
     "dts-bundle-generator": "^9.5.1",
     "esbuild": "^0.28.0",
-    "eslint": "^9.39.4",
-    "eslint-config-prettier": "^9.1.2",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-no-relative-import-paths": "^1.6.1",
-    "globals": "^17.5.0",
+    "globals": "^17.6.0",
     "husky": "^9.1.7",
-    "knip": "^6.4.1",
-    "lint-staged": "^16.4.0",
+    "knip": "^6.14.1",
+    "lint-staged": "^17.0.5",
     "prettier": "^3.8.3",
-    "tsx": "^4.21.0",
+    "tsx": "^4.22.2",
     "typedoc": "^0.28.19",
-    "typescript": "^5.2.0",
-    "vitest": "^4.1.4"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
   }
 }
