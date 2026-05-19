@@ -1,5 +1,8 @@
 export const PERMISSION_KEYS = [
+    'viewChannels',
     'sendMessages',
+    'addReactions',
+    'connect',
     'manageMessages',
     'deleteMessagesOfOthers',
     'manageChannels',
@@ -11,14 +14,13 @@ export const PERMISSION_KEYS = [
     'administrator',
     'manageWebhooks',
     'pingRolesAndEveryone',
-    'addReactions',
     'manageReactions',
-    'export_channel_messages',
-    'viewChannels',
+    'exportChannelMessages',
     'bypassSlowmode',
     'pinMessages',
     'seeDeletedMessages',
     'moderateMembers',
+    'manageStickers',
 ] as const;
 
 export type PermissionKey = (typeof PERMISSION_KEYS)[number];
