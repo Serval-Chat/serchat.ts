@@ -20,6 +20,9 @@ export type { Interaction as CommandInteraction } from './structures/Interaction
 export * from './managers/ApplicationCommandManager.js';
 export * from './managers/StickerManager.js';
 export * from './managers/WebhookManager.js';
+export * from './modules/EventBus.js';
+export * from './modules/Module.js';
+export * from './modules/ModuleManager.js';
 
 export * from './builders/MessageBuilder.js';
 export * from './errors/APIError.js';

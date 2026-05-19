@@ -4,6 +4,8 @@ import { WebSocketManager } from '@/gateway/WebSocketManager.js';
 import { ApplicationCommandManager } from '@/managers/ApplicationCommandManager.js';
 import { StickerManager } from '@/managers/StickerManager.js';
 import { WebhookManager } from '@/managers/WebhookManager.js';
+import { EventBus } from '@/modules/EventBus.js';
+import { ModuleManager } from '@/modules/ModuleManager.js';
 import { Message } from '@/structures/Message.js';
 import type { Interaction } from '@/structures/Interaction.js';
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
@@ -171,6 +173,7 @@ export interface Client extends EventEmitter {
         event: K,
         listener: (...args: ClientEvents[K]) => void,
     ): this;
+    off<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => void): this;
     emit<K extends keyof ClientEvents>(event: K, ...args: ClientEvents[K]): boolean;
 }
 
@@ -204,6 +207,10 @@ export class Client extends EventEmitter {
     public stickers: StickerManager;
     /** Manager for webhook endpoints. */
     public webhooks: WebhookManager;
+    /** Typed event bus used for SDK internals, modules, and public listeners. */
+    public events: EventBus<ClientEvents>;
+    /** Module registry for self-contained bot features. */
+    public modules: ModuleManager;
     /** The authenticated bot user, populated after the `ready` event fires. */
     public user: ClientUser | null = null;
     /** Whether the client has emitted the ready event at least once. */
@@ -226,15 +233,51 @@ export class Client extends EventEmitter {
         this.rest = new RESTClient({
             baseURL: this.options.apiBaseUrl as string,
         });
+        this.events = new EventBus<ClientEvents>({
+            logger: this.logger,
+            errorEvent: 'error',
+        });
 
         this.ws = new WebSocketManager(this);
         this.commands = new ApplicationCommandManager(this.rest);
         this.stickers = new StickerManager(this.rest);
         this.webhooks = new WebhookManager(this.rest);
+        this.modules = new ModuleManager(this);
 
-        this.on('interactionCreate', (interaction) => {
+        this.events.on('interactionCreate', (interaction) => {
             void this.commands.handleInteraction(interaction).catch(console.error);
         });
+    }
+
+    public override on<K extends keyof ClientEvents>(
+        event: K,
+        listener: (...args: ClientEvents[K]) => void,
+    ): this {
+        this.events.on(event, listener);
+        return this;
+    }
+
+    public override once<K extends keyof ClientEvents>(
+        event: K,
+        listener: (...args: ClientEvents[K]) => void,
+    ): this {
+        this.events.once(event, listener);
+        return this;
+    }
+
+    public override off<K extends keyof ClientEvents>(
+        event: K,
+        listener: (...args: ClientEvents[K]) => void,
+    ): this {
+        this.events.off(event, listener);
+        return this;
+    }
+
+    public override emit<K extends keyof ClientEvents>(
+        event: K,
+        ...args: ClientEvents[K]
+    ): boolean {
+        return this.events.emit(event, ...args);
     }
 
     /** Accessor for the application command manager. */

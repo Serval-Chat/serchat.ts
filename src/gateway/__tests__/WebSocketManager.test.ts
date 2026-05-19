@@ -171,6 +171,11 @@ describe('WebSocketManager', () => {
         await connectPromise;
 
         const emitSpy = vi.spyOn(client, 'emit');
+        const handleInteractionSpy = vi
+            .spyOn(client.commands, 'handleInteraction')
+            .mockResolvedValue();
+        const listenerSpy = vi.fn();
+        client.on('interactionCreate', listenerSpy);
         const interactionPayload = {
             command: 'test',
             options: [],
@@ -191,6 +196,8 @@ describe('WebSocketManager', () => {
         );
 
         expect(emitSpy).toHaveBeenCalledWith('interactionCreate', expect.any(Interaction));
+        expect(handleInteractionSpy).toHaveBeenCalledWith(expect.any(Interaction));
+        expect(listenerSpy).toHaveBeenCalledWith(expect.any(Interaction));
         const emittedInteraction = emitSpy.mock.calls.find(
             (c) => c[0] === 'interactionCreate',
         )?.[1] as Interaction;

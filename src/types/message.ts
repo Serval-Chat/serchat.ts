@@ -61,6 +61,7 @@ export interface IMessageServer {
     };
     poll?: IPoll;
     stickerId?: string;
+    senderIsBot?: boolean;
 }
 
 export interface IPollInput {

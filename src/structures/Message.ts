@@ -69,6 +69,8 @@ export class Message implements IMessageServer {
     public poll?: IPoll;
     /** Sticker attached to this message, if any. */
     public stickerId?: string;
+    /** Whether the message sender is a bot account. */
+    public senderIsBot: boolean;
 
     private client: Client;
 
@@ -99,6 +101,7 @@ export class Message implements IMessageServer {
         this.interaction = data.interaction;
         this.poll = data.poll;
         this.stickerId = data.stickerId;
+        this.senderIsBot = data.senderIsBot ?? false;
     }
 
     /** Sends a reply to this message. */
@@ -145,5 +148,20 @@ export class Message implements IMessageServer {
     public getAttachmentsByType(type: MessageAttachmentType): IMessageAttachment[] {
         if (!this.attachments) return [];
         return this.attachments.filter((att) => att.type === type);
+    }
+
+    /** Returns whether the message plain text is empty or consists only of whitespace. */
+    public get isEmpty(): boolean {
+        return !this.text.trim();
+    }
+
+    /** Checks if this message was sent by the currently authenticated client user. */
+    public get isOwnMessage(): boolean {
+        return this.client.user?.id === this.senderId;
+    }
+
+    /** Checks if this message was sent by any bot account (including this client). */
+    public get isFromBot(): boolean {
+        return this.senderIsBot || this.isOwnMessage;
     }
 }
