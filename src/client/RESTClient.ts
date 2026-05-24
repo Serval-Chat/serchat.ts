@@ -27,7 +27,7 @@ export interface Interceptors {
      * NOTE: Error interceptors can transform or replace the error, or throw a new one.
      * They cannot "recover" from an error to return a successful response data.
      */
-    error: Array<(error: APIError) => APIError | Promise<never>>;
+    error: Array<(error: APIError) => APIError | Promise<APIError>>;
 }
 
 export type APIResponse<T> = { data: T };
@@ -384,8 +384,27 @@ export class RESTClient {
 
                     // Apply error interceptors
                     let finalError: APIError = error;
+                    const authorizationBeforeErrorHandlers =
+                        typeof requestInit.headers === 'object' &&
+                        requestInit.headers !== null &&
+                        !Array.isArray(requestInit.headers)
+                            ? (requestInit.headers as Record<string, string>)['Authorization']
+                            : undefined;
                     for (const interceptor of this.interceptors.error) {
                         finalError = await interceptor(finalError);
+                    }
+                    const authorizationAfterErrorHandlers = this._headers['Authorization'];
+                    if (
+                        response.status === 401 &&
+                        attempt < 2 &&
+                        authorizationAfterErrorHandlers !== undefined &&
+                        authorizationAfterErrorHandlers !== authorizationBeforeErrorHandlers
+                    ) {
+                        requestInit.headers = {
+                            ...(requestInit.headers as Record<string, string>),
+                            Authorization: authorizationAfterErrorHandlers,
+                        };
+                        return await execute(attempt + 1);
                     }
                     if (!(finalError instanceof APIError)) {
                         // An interceptor returned a non-APIError; wrap it defensively.

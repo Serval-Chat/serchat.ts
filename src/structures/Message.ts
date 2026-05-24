@@ -5,6 +5,7 @@ import type {
     ISendMessageRequest,
     IPoll,
     MessageAttachmentType,
+    MessageReaction,
 } from '@/types/message.js';
 import type { IEmbed } from '@/types/embed.js';
 import type { InteractionValue } from '@/types/interactions.js';
@@ -20,8 +21,8 @@ import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
 export class Message implements IMessageServer {
     /** Primary message identifier. Normalised from either `messageId` or `_id`. */
     public messageId: string;
-    /** Legacy MongoDB `_id` field, present on older messages. */
-    public _id?: string;
+    /** MongoDB `_id` field. */
+    public _id: string;
     /** ID of the server this message belongs to. */
     public serverId: string;
     /** ID of the channel this message was posted in. */
@@ -56,19 +57,21 @@ export class Message implements IMessageServer {
     /** Avatar URL override for webhook messages. */
     public webhookAvatarUrl?: string;
     /** Rich embed objects attached to this message. */
-    public embeds?: IEmbed[];
+    public embeds: IEmbed[];
     /** Structured file attachments on this message. */
-    public attachments?: IMessageAttachment[];
+    public attachments: IMessageAttachment[];
+    /** Aggregated reaction data on this message. */
+    public reactions: MessageReaction[];
     /** Interaction metadata if this message was sent in response to a slash command. */
-    public interaction?: {
+    public interaction: {
         command: string;
         options: { name: string; value: InteractionValue }[];
         user: { id: string; username: string };
-    };
+    } | null;
     /** Poll attached to this message, if any. */
-    public poll?: IPoll;
+    public poll: IPoll | null;
     /** Sticker attached to this message, if any. */
-    public stickerId?: string;
+    public stickerId: string | null;
     /** Whether the message sender is a bot account. */
     public senderIsBot: boolean;
 
@@ -81,7 +84,7 @@ export class Message implements IMessageServer {
             throw new Error('Message payload is missing both messageId and _id');
         }
         this.messageId = normalizedMessageId;
-        this._id = data._id;
+        this._id = data._id ?? normalizedMessageId;
         this.serverId = data.serverId;
         this.channelId = data.channelId;
         this.senderId = data.senderId;
@@ -96,11 +99,12 @@ export class Message implements IMessageServer {
         this.isWebhook = data.isWebhook;
         this.webhookUsername = data.webhookUsername;
         this.webhookAvatarUrl = data.webhookAvatarUrl;
-        this.embeds = data.embeds;
-        this.attachments = data.attachments;
-        this.interaction = data.interaction;
-        this.poll = data.poll;
-        this.stickerId = data.stickerId;
+        this.embeds = data.embeds ?? [];
+        this.attachments = data.attachments ?? [];
+        this.reactions = data.reactions ?? [];
+        this.interaction = data.interaction ?? null;
+        this.poll = data.poll ?? null;
+        this.stickerId = data.stickerId ?? null;
         this.senderIsBot = data.senderIsBot ?? false;
     }
 
@@ -146,7 +150,6 @@ export class Message implements IMessageServer {
 
     /** Filters and returns attachments belonging to a specific file/media type. */
     public getAttachmentsByType(type: MessageAttachmentType): IMessageAttachment[] {
-        if (!this.attachments) return [];
         return this.attachments.filter((att) => att.type === type);
     }
 

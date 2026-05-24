@@ -30,9 +30,26 @@ export interface IMessageAttachment {
     spoiler?: boolean;
 }
 
+export type MessageReaction =
+    | {
+          emoji: string;
+          emojiType: 'unicode';
+          count: number;
+          users: string[];
+      }
+    | {
+          emoji: string;
+          emojiType: 'custom';
+          emojiId: string;
+          count: number;
+          users: string[];
+          emojiName?: string;
+          emojiUrl?: string;
+      };
+
 export interface IMessageServer {
     messageId: string;
-    _id?: string;
+    _id: string;
     serverId: string;
     channelId: string;
     senderId: string;
@@ -52,16 +69,17 @@ export interface IMessageServer {
     isWebhook: boolean;
     webhookUsername?: string;
     webhookAvatarUrl?: string;
-    embeds?: IEmbed[];
-    attachments?: IMessageAttachment[];
-    interaction?: {
+    embeds: IEmbed[];
+    attachments: IMessageAttachment[];
+    reactions: MessageReaction[];
+    interaction: {
         command: string;
         options: { name: string; value: InteractionValue }[];
         user: { id: string; username: string };
-    };
-    poll?: IPoll;
-    stickerId?: string;
-    senderIsBot?: boolean;
+    } | null;
+    poll: IPoll | null;
+    stickerId: string | null;
+    senderIsBot: boolean;
 }
 
 export interface IPollInput {

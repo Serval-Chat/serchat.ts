@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Client } from '@/client/Client.js';
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
 
+function jwtWithExp(exp: number): string {
+    const payload = Buffer.from(JSON.stringify({ exp })).toString('base64url');
+    return `header.${payload}.signature`;
+}
+
 describe('Client', () => {
     let mockFetch: any;
 
@@ -58,6 +63,62 @@ describe('Client', () => {
             );
             expect(token).toBe('mock-token');
             expect(client.getRest().headers['Authorization']).toBe('Bearer mock-token');
+        });
+
+        it('should refresh the token and retry once when a REST request returns 401', async () => {
+            mockFetch
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ token: jwtWithExp(Math.floor(Date.now() / 1000) + 3600) }),
+                })
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 401,
+                    headers: new Headers({ 'Content-Type': 'application/json' }),
+                    json: async () => ({ error: 'Invalid token' }),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    json: async () => ({
+                        token: jwtWithExp(Math.floor(Date.now() / 1000) + 7200),
+                    }),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ onlineCount: 1, totalCount: 2 }),
+                });
+
+            const client = new Client();
+            vi.spyOn(client, 'connectWS').mockResolvedValue();
+            await client.loginWithSecret('client-id', 'client-secret');
+
+            const stats = await client.getServerStats('server-1');
+
+            expect(stats).toEqual({ onlineCount: 1, totalCount: 2 });
+            expect(mockFetch).toHaveBeenNthCalledWith(
+                3,
+                'https://ser.chat/api/v1/bots/token',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({
+                        client_id: 'client-id',
+                        client_secret: 'client-secret',
+                    }),
+                }),
+            );
+            expect(mockFetch).toHaveBeenNthCalledWith(
+                4,
+                'https://ser.chat/api/v1/servers/server-1/stats',
+                expect.objectContaining({
+                    method: 'GET',
+                    headers: expect.objectContaining({
+                        Authorization: expect.stringContaining('Bearer header.'),
+                    }),
+                }),
+            );
         });
     });
 
