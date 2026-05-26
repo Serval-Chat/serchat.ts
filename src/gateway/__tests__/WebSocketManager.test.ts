@@ -218,6 +218,49 @@ describe('WebSocketManager', () => {
         await expect(connectPromise).rejects.toThrow('WebSocket closed before authentication.');
     });
 
+    it('keeps the connection promise alive after a bad HTTP handshake and resolves after reconnect', async () => {
+        vi.useFakeTimers();
+        const connectPromise = manager.connect();
+        let settled = false;
+        void connectPromise.then(() => {
+            settled = true;
+        });
+
+        const errorCallback = mockWs.on.mock.calls.find((c: unknown[]) => c[0] === 'error')![1] as (
+            err: Error,
+        ) => void;
+        const closeCallback = mockWs.on.mock.calls.find((c: unknown[]) => c[0] === 'close')![1] as (
+            code: number,
+        ) => void;
+
+        errorCallback(new Error('Unexpected server response: 521'));
+        closeCallback(1006);
+
+        await Promise.resolve();
+        expect(settled).toBe(false);
+
+        vi.runOnlyPendingTimers();
+
+        const openCallback = mockWs.on.mock.calls.find(
+            (c: unknown[], index) => index >= 4 && c[0] === 'open',
+        )![1] as () => void;
+        openCallback();
+        const messageCallback = mockWs.on.mock.calls.find(
+            (c: unknown[], index) => index >= 4 && c[0] === 'message',
+        )![1] as (data: string) => void;
+        messageCallback(
+            JSON.stringify({
+                event: {
+                    type: 'authenticated',
+                    payload: { user: { id: 'bot-1', username: 'Bot' } },
+                },
+            }),
+        );
+
+        await expect(connectPromise).resolves.toBeUndefined();
+        vi.useRealTimers();
+    });
+
     it('attempts to reconnect after disconnect', async () => {
         vi.useFakeTimers();
         const connectPromise = manager.connect();

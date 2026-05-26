@@ -34,6 +34,7 @@ export class WebSocketManager {
     private heartbeatRequestId: string | null = null;
     private readonly heartbeatIntervalMs = 30000;
     private readonly heartbeatTimeoutMs = 10000;
+    private lastConnectionError: Error | null = null;
 
     /** Establishes the WebSocket connection. */
     public async connect(): Promise<void> {
@@ -75,6 +76,7 @@ export class WebSocketManager {
             this.ws.close();
         }
 
+        this.lastConnectionError = null;
         this.ws = new WebSocket(wsUrl);
 
         this.ws.on('open', () => {
@@ -275,12 +277,7 @@ export class WebSocketManager {
         this.ws.on('error', (err) => {
             this.client.logger.error(`WebSocket error: ${err.message}`);
             this.stopHeartbeat();
-            if (this.connectionReject) {
-                this.connectionReject(err);
-                this.connectionPromise = null;
-                this.connectionResolve = null;
-                this.connectionReject = null;
-            }
+            this.lastConnectionError = err;
         });
 
         this.ws.on('close', (code, reason) => {
@@ -289,7 +286,7 @@ export class WebSocketManager {
                 `WebSocket connection closed. Code: ${code}, Reason: ${reason ? reason.toString() : 'None'}`,
             );
             this.client.emit('disconnect');
-            if (this.connectionReject) {
+            if (this.connectionReject && this.lastConnectionError === null) {
                 this.connectionReject(
                     new Error(
                         `WebSocket closed before authentication. Code: ${code}, Reason: ${reason ? reason.toString() : 'None'}`,
@@ -299,6 +296,7 @@ export class WebSocketManager {
                 this.connectionResolve = null;
                 this.connectionReject = null;
             }
+            this.lastConnectionError = null;
             this.scheduleReconnect();
         });
     }
