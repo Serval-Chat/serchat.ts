@@ -465,6 +465,37 @@ export class Client extends EventEmitter {
         return new Message(this, unwrap(response));
     }
 
+    /**
+     * Sends an ephemeral response for a bot interaction.
+     *
+     * The message is delivered only to the invoking user via a WebSocket event.
+     * It is never persisted to the database and never broadcast to other channel members.
+     *
+     * You should call this via {@link Interaction.ephemeralReply} rather than
+     * using this method directly.
+     */
+    public async sendEphemeralInteractionResponse(
+        serverId: string,
+        channelId: string,
+        senderId: string,
+        payload: ISendMessageRequest,
+        invocationId?: string,
+    ): Promise<void> {
+        if (!this.token) throw new Error('Client is not logged in.');
+
+        const text = payload.content ?? payload.text ?? '';
+
+        await this.rest.post('/interactions/respond', {
+            serverId,
+            channelId,
+            senderId,
+            text,
+            embeds: payload.embeds ?? [],
+            invocationId: invocationId ?? null,
+            ephemeral: true,
+        } as object as JsonValue);
+    }
+
     /** Votes on a poll option. */
     public async votePoll(
         serverId: string,

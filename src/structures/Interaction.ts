@@ -95,7 +95,7 @@ export class Interaction {
         return !!this.permissions[permission];
     }
 
-    /** Sends a reply to this interaction. */
+    /** Sends a reply to this interaction (visible to all channel members). */
     public async reply(
         content: string | ISendMessageRequest | EmbedBuilder | IMessageWithEmbeds | MessageBuilder,
     ): Promise<Message> {
@@ -129,5 +129,41 @@ export class Interaction {
         };
 
         return this.client.sendMessage(this.serverId, this.channelId, payload);
+    }
+
+    /**
+     * Sends an ephemeral reply to this interaction.
+     *
+     * The response is delivered only to the user who invoked the command
+     * via a WebSocket event. It is never saved to the database and
+     * never broadcast to other channel members.
+     */
+    public async ephemeralReply(
+        content: string | ISendMessageRequest | EmbedBuilder | IMessageWithEmbeds | MessageBuilder,
+    ): Promise<void> {
+        let payload: ISendMessageRequest;
+
+        if (content instanceof EmbedBuilder) {
+            payload = { embeds: [content.toJSON()] };
+        } else if (content instanceof MessageBuilder) {
+            payload = { content: content.build() };
+        } else if (typeof content === 'string') {
+            payload = { content };
+        } else {
+            payload = { ...(content as ISendMessageRequest) };
+            if (payload.embeds) {
+                payload.embeds = payload.embeds.map((e) =>
+                    e instanceof EmbedBuilder ? e.toJSON() : e,
+                );
+            }
+        }
+
+        await this.client.sendEphemeralInteractionResponse(
+            this.serverId,
+            this.channelId,
+            this.senderId,
+            payload,
+            this.invocationId,
+        );
     }
 }

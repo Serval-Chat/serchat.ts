@@ -267,6 +267,7 @@ export class WebSocketManager {
                 case 'pong':
                 case 'authenticated':
                 case 'server_joined':
+                case 'interaction_response_server':
                     break;
             }
         });

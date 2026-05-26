@@ -107,6 +107,8 @@ export interface ISendMessageRequest {
         user: { id: string; username: string };
     };
     poll?: IPollInput | { toJSON(): IPollInput };
+    /** When true, the response is only visible to the user who invoked the command. */
+    ephemeral?: boolean;
 }
 
 export interface IMessageWithEmbeds {

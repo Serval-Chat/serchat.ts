@@ -55,6 +55,16 @@ export type WsEvent =
     | { type: 'error'; payload: { code: WsErrorCode; details?: string | Record<string, string> } }
     | { type: 'message_server'; payload: IMessageServer }
     | { type: 'interaction_create_server'; payload: InteractionCreatePayload }
+    | {
+          type: 'interaction_response_server';
+          payload: {
+              serverId: string;
+              channelId: string;
+              text: string;
+              invocationId?: string;
+              ephemeral?: boolean;
+          };
+      }
     | { type: 'message_server_edited'; payload: MessageUpdatePayload }
     | { type: 'message_server_deleted'; payload: MessageDeletePayload }
     | {
