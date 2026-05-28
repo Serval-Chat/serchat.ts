@@ -3,6 +3,9 @@ export type InlineCallback = (t: InlineBuilder) => InlineBuilder;
 
 import { MermaidBuilder, type MermaidCallback } from './MermaidBuilder.js';
 
+/** Discord-compatible timestamp display style. */
+export type TimestampStyle = 't' | 'T' | 'd' | 'D' | 'f' | 'F' | 'R';
+
 /**
  * Builder for constructing inline Serchat markdown.
  *
@@ -179,6 +182,26 @@ export class InlineBuilder {
     /** Appends a server emoji. */
     public customEmoji(id: string): this {
         this.content += `<emoji:${id}>`;
+        return this;
+    }
+
+    /**
+     * Appends a timestamp (`<t:unix:style>`).
+     *
+     * @param timestamp - Unix timestamp in seconds, a millisecond timestamp, or a Date.
+     * @param style - Optional display style: short/long time, date, date-time, or relative.
+     *
+     * @example `.timestamp(123456789, 'R')` → `<t:123456789:R>`
+     */
+    public timestamp(timestamp: number | Date, style?: TimestampStyle): this {
+        const unixTimestamp =
+            timestamp instanceof Date
+                ? Math.floor(timestamp.getTime() / 1000)
+                : timestamp > 10_000_000_000
+                  ? Math.floor(timestamp / 1000)
+                  : Math.floor(timestamp);
+
+        this.content += `<t:${unixTimestamp}${style ? `:${style}` : ''}>`;
         return this;
     }
 

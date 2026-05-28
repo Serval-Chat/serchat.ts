@@ -255,6 +255,7 @@ export interface UserUpdatedPayload {
         disableCustomUsernameFonts?: boolean;
         disableCustomUsernameColors?: boolean;
         disableCustomUsernameGlow?: boolean;
+        use24HourTime?: boolean;
     };
     senderId?: string;
 }
