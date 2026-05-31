@@ -1,4 +1,4 @@
-import type { IEmbed } from './embed.js';
+import type { IEmbed, IEmbedButton } from './embed.js';
 import type { InteractionValue } from './interactions.js';
 
 export interface IPollOption {
@@ -70,6 +70,7 @@ export interface IMessageServer {
     webhookUsername?: string;
     webhookAvatarUrl?: string;
     embeds: IEmbed[];
+    components: IEmbedButton[];
     attachments: IMessageAttachment[];
     reactions: MessageReaction[];
     interaction: {
@@ -100,6 +101,7 @@ export interface ISendMessageRequest {
     replyToId?: string;
     noEmbedsUrls?: string[];
     embeds?: IEmbed[];
+    components?: IEmbedButton[];
     attachments?: IMessageAttachment[];
     interaction?: {
         command: string;

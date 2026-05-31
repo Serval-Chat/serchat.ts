@@ -1,6 +1,7 @@
 export * from './client/Client.js';
 export * from './client/RESTClient.js';
 export * from './builders/EmbedBuilder.js';
+export * from './builders/ComponentsBuilder.js';
 export * from './builders/PollBuilder.js';
 export * from './builders/MermaidBuilder.js';
 export * from './types/embed.js';
@@ -15,6 +16,7 @@ export * from './types/webhooks.js';
 export * from './types/json.js';
 export * from './structures/Message.js';
 export * from './structures/Interaction.js';
+export * from './structures/ButtonInteraction.js';
 export * from './structures/BotCommand.js';
 export type { Interaction as CommandInteraction } from './structures/Interaction.js';
 export * from './managers/ApplicationCommandManager.js';

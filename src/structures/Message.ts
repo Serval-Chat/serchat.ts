@@ -7,7 +7,7 @@ import type {
     MessageAttachmentType,
     MessageReaction,
 } from '@/types/message.js';
-import type { IEmbed } from '@/types/embed.js';
+import type { IEmbed, IEmbedButton } from '@/types/embed.js';
 import type { InteractionValue } from '@/types/interactions.js';
 
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
@@ -58,6 +58,8 @@ export class Message implements IMessageServer {
     public webhookAvatarUrl?: string;
     /** Rich embed objects attached to this message. */
     public embeds: IEmbed[];
+    /** Interactive message components attached to this message. */
+    public components: IEmbedButton[];
     /** Structured file attachments on this message. */
     public attachments: IMessageAttachment[];
     /** Aggregated reaction data on this message. */
@@ -100,6 +102,7 @@ export class Message implements IMessageServer {
         this.webhookUsername = data.webhookUsername;
         this.webhookAvatarUrl = data.webhookAvatarUrl;
         this.embeds = data.embeds ?? [];
+        this.components = data.components ?? [];
         this.attachments = data.attachments ?? [];
         this.reactions = data.reactions ?? [];
         this.interaction = data.interaction ?? null;

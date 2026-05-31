@@ -8,6 +8,7 @@ import { EventBus } from '@/modules/EventBus.js';
 import { ModuleManager } from '@/modules/ModuleManager.js';
 import { Message } from '@/structures/Message.js';
 import type { Interaction } from '@/structures/Interaction.js';
+import type { ButtonInteraction } from '@/structures/ButtonInteraction.js';
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
 import { MessageBuilder } from '@/builders/MessageBuilder.js';
 import { PollBuilder } from '@/builders/PollBuilder.js';
@@ -90,6 +91,8 @@ export interface ClientEvents {
     messageBulkDelete: [MessageBulkDeletePayload];
     /** A user invoked a slash command. */
     interactionCreate: [Interaction];
+    /** A user clicked a bot-authored embed button. */
+    buttonInteractionCreate: [ButtonInteraction];
     /** A reaction was added to a message. */
     messageReactionAdd: [ReactionPayload];
     /** A reaction was removed from a message. */
@@ -450,6 +453,7 @@ export class Client extends EventEmitter {
                     e instanceof EmbedBuilder ? e.toJSON() : e,
                 );
             }
+            this.normalizeComponents(payload);
             if (payload.noEmbedsUrls) {
                 payload.noEmbedsUrls = payload.noEmbedsUrls.slice(0, 25);
             }
@@ -460,6 +464,39 @@ export class Client extends EventEmitter {
 
         const response = await this.rest.post<IMessageServer>(
             `/servers/${serverId}/channels/${channelId}/messages`,
+            payload as JsonValue,
+        );
+        return new Message(this, unwrap(response));
+    }
+
+    /** Edits one of the bot's messages in a server channel. */
+    public async editMessage(
+        serverId: string,
+        channelId: string,
+        messageId: string,
+        content: string | ISendMessageRequest | EmbedBuilder | IMessageWithEmbeds | MessageBuilder,
+    ): Promise<Message> {
+        if (!this.token) throw new Error('Client is not logged in.');
+
+        let payload: ISendMessageRequest;
+        if (content instanceof EmbedBuilder) {
+            payload = { embeds: [content.toJSON()] };
+        } else if (content instanceof MessageBuilder) {
+            payload = { content: content.build() };
+        } else if (typeof content === 'string') {
+            payload = { content };
+        } else {
+            payload = { ...(content as ISendMessageRequest) };
+            if (payload.embeds) {
+                payload.embeds = payload.embeds.map((e) =>
+                    e instanceof EmbedBuilder ? e.toJSON() : e,
+                );
+            }
+            this.normalizeComponents(payload);
+        }
+
+        const response = await this.rest.patch<IMessageServer>(
+            `/servers/${serverId}/channels/${channelId}/messages/${messageId}`,
             payload as JsonValue,
         );
         return new Message(this, unwrap(response));
@@ -491,9 +528,17 @@ export class Client extends EventEmitter {
             senderId,
             text,
             embeds: payload.embeds ?? [],
+            components: payload.components ?? [],
             invocationId: invocationId ?? null,
             ephemeral: true,
         } as object as JsonValue);
+    }
+
+    private normalizeComponents(payload: ISendMessageRequest): void {
+        if (!payload.components) return;
+        payload.components = payload.components
+            .slice(0, 8)
+            .map((component) => ({ ...component, type: 'button' }));
     }
 
     /** Votes on a poll option. */

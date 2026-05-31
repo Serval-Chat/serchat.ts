@@ -20,6 +20,7 @@ import type {
     RoleUpdatedPayload,
     RoleDeletedPayload,
     InteractionCreatePayload,
+    ComponentInteractionCreatePayload,
     ServerJoinedPayload,
     PresenceSyncPayload,
     UserPresencePayload,
@@ -55,6 +56,10 @@ export type WsEvent =
     | { type: 'error'; payload: { code: WsErrorCode; details?: string | Record<string, string> } }
     | { type: 'message_server'; payload: IMessageServer }
     | { type: 'interaction_create_server'; payload: InteractionCreatePayload }
+    | {
+          type: 'component_interaction_create_server';
+          payload: ComponentInteractionCreatePayload;
+      }
     | {
           type: 'interaction_response_server';
           payload: {

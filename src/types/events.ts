@@ -1,5 +1,6 @@
 import type { InteractionOption } from './commands.js';
-import type { IPoll } from './message.js';
+import type { IEmbed } from './embed.js';
+import type { IPoll, IMessageAttachment } from './message.js';
 
 export interface PollVoteUpdatePayload {
     messageId: string;
@@ -59,6 +60,8 @@ export interface MessageUpdatePayload {
     text: string;
     isEdited: boolean;
     editedAt: string;
+    embeds?: IEmbed[];
+    attachments?: IMessageAttachment[];
 }
 
 export interface MessageDeletePayload {
@@ -187,6 +190,19 @@ export interface InteractionCreatePayload {
     user?: { id: string; username: string };
     invocationId?: string;
     commandId?: string;
+}
+
+export interface ComponentInteractionCreatePayload {
+    componentType: 'button';
+    customId: string;
+    messageId: string;
+    componentIndex: number;
+    serverId: string;
+    channelId: string;
+    senderId: string;
+    senderUsername: string;
+    senderPermissions?: ServerPermissions;
+    invocationId?: string;
 }
 
 export interface ServerJoinedPayload {

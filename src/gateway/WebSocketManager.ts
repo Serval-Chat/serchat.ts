@@ -4,6 +4,7 @@ import type { Client } from '@/client/Client.js';
 
 import { Message } from '@/structures/Message.js';
 import { Interaction } from '@/structures/Interaction.js';
+import { ButtonInteraction } from '@/structures/ButtonInteraction.js';
 import type { IWsIncomingMessage } from '@/types/ws.js';
 import type { JsonValue } from '@/types/json.js';
 
@@ -153,6 +154,12 @@ export class WebSocketManager {
                     this.client.emit(
                         'interactionCreate',
                         new Interaction(this.client, event.payload),
+                    );
+                    break;
+                case 'component_interaction_create_server':
+                    this.client.emit(
+                        'buttonInteractionCreate',
+                        new ButtonInteraction(this.client, event.payload),
                     );
                     break;
                 case 'message_server_edited':
