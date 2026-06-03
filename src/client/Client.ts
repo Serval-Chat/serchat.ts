@@ -711,7 +711,7 @@ export class Client extends EventEmitter {
     ): Promise<boolean> {
         try {
             const server = await this.getServer(serverId);
-            if (server && (server.ownerId === userId || server._id === userId)) return true;
+            if (server && (server.ownerId === userId || server.id === userId)) return true;
 
             const [memberResp, roles] = await Promise.all([
                 this.rest.get<Record<string, JsonValue>>(`/servers/${serverId}/members/${userId}`),
@@ -735,10 +735,10 @@ export class Client extends EventEmitter {
 
             const everyoneRole = roles.find((r) => r.name === '@everyone');
             const roleIdsSet = new Set(memberRoleIds);
-            if (everyoneRole) roleIdsSet.add(everyoneRole.id || everyoneRole._id);
+            if (everyoneRole) roleIdsSet.add(everyoneRole.id || everyoneRole.id);
 
             const userRoles = roles
-                .filter((r) => roleIdsSet.has(r.id || r._id))
+                .filter((r) => roleIdsSet.has(r.id || r.id))
                 .sort((a, b) => a.position - b.position);
 
             for (const role of userRoles) {

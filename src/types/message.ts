@@ -49,7 +49,7 @@ export type MessageReaction =
 
 export interface IMessageServer {
     messageId: string;
-    _id: string;
+    id: string;
     serverId: string;
     channelId: string;
     senderId: string;

@@ -1,7 +1,7 @@
 import type { IEmbed } from './embed.js';
 
 export interface IWebhook {
-    _id: string;
+    id: string;
     serverId?: string;
     channelId?: string;
     name: string;

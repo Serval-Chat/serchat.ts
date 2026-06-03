@@ -19,10 +19,10 @@ import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
  * like replying, reacting, and deleting.
  */
 export class Message implements IMessageServer {
-    /** Primary message identifier. Normalised from either `messageId` or `_id`. */
+    /** Primary message identifier. Normalised from either `messageId` or `id`. */
     public messageId: string;
-    /** MongoDB `_id` field. */
-    public _id: string;
+    /** MongoDB `id` field. */
+    public id: string;
     /** ID of the server this message belongs to. */
     public serverId: string;
     /** ID of the channel this message was posted in. */
@@ -81,12 +81,12 @@ export class Message implements IMessageServer {
 
     constructor(client: Client, data: IMessageServer) {
         this.client = client;
-        const normalizedMessageId = data.messageId ?? data._id;
+        const normalizedMessageId = data.messageId ?? data.id;
         if (!normalizedMessageId) {
-            throw new Error('Message payload is missing both messageId and _id');
+            throw new Error('Message payload is missing both messageId and id');
         }
         this.messageId = normalizedMessageId;
-        this._id = data._id ?? normalizedMessageId;
+        this.id = data.id ?? normalizedMessageId;
         this.serverId = data.serverId;
         this.channelId = data.channelId;
         this.senderId = data.senderId;

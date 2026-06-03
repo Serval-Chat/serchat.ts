@@ -10,7 +10,6 @@ export interface PollVoteUpdatePayload {
 }
 
 export interface Server {
-    _id: string;
     id: string;
     name: string;
     ownerId: string;
@@ -19,7 +18,6 @@ export interface Server {
 }
 
 export interface Channel {
-    _id: string;
     id: string;
     name: string;
     type: string;
@@ -29,7 +27,6 @@ export interface Channel {
 }
 
 export interface Category {
-    _id: string;
     id: string;
     name: string;
     serverId: string;
@@ -37,7 +34,6 @@ export interface Category {
 }
 
 export interface Role {
-    _id: string;
     id: string;
     name: string;
     color?: string;
@@ -46,7 +42,7 @@ export interface Role {
 }
 
 export interface ServerMember {
-    _id: string;
+    id: string;
     userId: string;
     serverId: string;
     nickname?: string;

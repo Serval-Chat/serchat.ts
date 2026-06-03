@@ -26,7 +26,7 @@ describe('WebhookManager', () => {
         mockFetch.mockResolvedValueOnce(
             createMockResponse([
                 {
-                    _id: 'webhook-1',
+                    id: 'webhook-1',
                     name: 'Deploys',
                     token: 'token',
                     createdBy: 'user-1',
@@ -47,7 +47,7 @@ describe('WebhookManager', () => {
     it('creates a webhook', async () => {
         mockFetch.mockResolvedValueOnce(
             createMockResponse({
-                _id: 'webhook-1',
+                id: 'webhook-1',
                 name: 'Deploys',
                 token: 'token',
                 avatarUrl: 'https://example.com/avatar.png',
@@ -70,7 +70,7 @@ describe('WebhookManager', () => {
                 }),
             }),
         );
-        expect(webhook._id).toBe('webhook-1');
+        expect(webhook.id).toBe('webhook-1');
     });
 
     it('deletes a webhook', async () => {
