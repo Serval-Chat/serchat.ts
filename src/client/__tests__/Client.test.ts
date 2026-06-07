@@ -134,7 +134,7 @@ describe('Client', () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
-                json: async () => ({ messageId: 'msg-1', text: 'Hello' }),
+                json: async () => ({ id: 'msg-1', text: 'Hello' }),
             });
 
             const client = new Client();
@@ -153,6 +153,7 @@ describe('Client', () => {
                 }),
             );
             expect(result.text).toBe('Hello');
+            expect(result.id).toBe('msg-1');
             expect(result.messageId).toBe('msg-1');
         });
 
