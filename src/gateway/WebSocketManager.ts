@@ -12,6 +12,8 @@ import type { JsonValue } from '@/types/json.js';
 export class WebSocketManager {
     /** The underlying `ws` WebSocket instance, or `null` when disconnected. */
     public ws: WebSocket | null = null;
+    /** Most recent heartbeat round-trip latency in milliseconds, or null before the first pong. */
+    public latency: number | null = null;
     private client: Client;
     /** Correlates request IDs with their resolve/reject handlers. */
     private pendingRequests = new Map<
@@ -33,6 +35,7 @@ export class WebSocketManager {
     private heartbeatInterval: NodeJS.Timeout | null = null;
     private heartbeatTimeout: NodeJS.Timeout | null = null;
     private heartbeatRequestId: string | null = null;
+    private heartbeatSentAt: number | null = null;
     private readonly heartbeatIntervalMs = 30000;
     private readonly heartbeatTimeoutMs = 10000;
     private lastConnectionError: Error | null = null;
@@ -327,6 +330,7 @@ export class WebSocketManager {
             this.heartbeatTimeout = null;
         }
         this.heartbeatRequestId = null;
+        this.heartbeatSentAt = null;
     }
 
     private sendHeartbeat(): void {
@@ -335,6 +339,7 @@ export class WebSocketManager {
 
         const id = crypto.randomUUID();
         this.heartbeatRequestId = id;
+        this.heartbeatSentAt = Date.now();
         this.ws.send(
             JSON.stringify({
                 id,
@@ -359,6 +364,8 @@ export class WebSocketManager {
         if (msg.meta?.replyTo !== this.heartbeatRequestId) return;
 
         this.heartbeatRequestId = null;
+        this.latency = this.heartbeatSentAt === null ? null : Date.now() - this.heartbeatSentAt;
+        this.heartbeatSentAt = null;
         if (this.heartbeatTimeout !== null) {
             clearTimeout(this.heartbeatTimeout);
             this.heartbeatTimeout = null;

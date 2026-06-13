@@ -1,6 +1,6 @@
 {
   "name": "serchat.ts",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "TypeScript SDK for Serchat",
   "author": "Serchat",
   "license": "MIT",

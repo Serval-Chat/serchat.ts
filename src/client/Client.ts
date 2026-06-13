@@ -12,7 +12,6 @@ import type { ButtonInteraction } from '@/structures/ButtonInteraction.js';
 import { EmbedBuilder } from '@/builders/EmbedBuilder.js';
 import { MessageBuilder } from '@/builders/MessageBuilder.js';
 import { PollBuilder } from '@/builders/PollBuilder.js';
-import { UnauthorizedError } from '@/errors/APIError.js';
 import type { IMessageServer, ISendMessageRequest } from '@/types/message.js';
 import { Logger, LogLevel } from '@/util/Logger.js';
 import type {
@@ -71,6 +70,94 @@ export interface ClientOptions {
 
 import type { ClientUser } from '@/types/user.js';
 export type { ClientUser };
+
+export interface UserProfile {
+    id: string;
+    username: string;
+    displayName: string | null;
+    profilePicture: string | null;
+    customStatus?: {
+        text?: string;
+        emoji?: string | null;
+        expiresAt?: string | null;
+        updatedAt?: string;
+    } | null;
+    createdAt?: string;
+    bio?: string;
+    pronouns?: string;
+    badges?: Array<{
+        id: string;
+        name: string;
+        description: string;
+        icon: string;
+        color: string;
+        createdAt: string;
+    }>;
+    banner?: string | null;
+}
+
+export interface ServerMemberDetails {
+    id: string;
+    serverId: string;
+    userId: string;
+    roles: string[];
+    nickname?: string | null;
+    communicationDisabledUntil?: string | null;
+    joinedAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    user: UserProfile | null;
+}
+
+export interface ServerBan {
+    userId: string;
+    username?: string;
+    reason?: string;
+    bannedAt?: string;
+}
+
+export interface AuditLogEntry {
+    id: string;
+    action: string;
+    moderatorId: string;
+    moderator?: {
+        id: string;
+        username: string;
+        avatarUrl?: string;
+    };
+    targetId?: string;
+    targetType?: string;
+    target?: {
+        id?: string;
+        username?: string;
+        name?: string;
+        avatarUrl?: string;
+    };
+    changes?: Array<{
+        field: string;
+        before?: JsonValue;
+        after?: JsonValue;
+    }>;
+    reason?: string;
+    metadata?: Record<string, JsonValue>;
+    createdAt: string;
+}
+
+export interface AuditLogResponse {
+    entries: AuditLogEntry[];
+    nextCursor: string | null;
+}
+
+export interface AuditLogQuery {
+    limit?: number;
+    cursor?: string;
+    action?: string;
+    moderatorId?: string;
+    targetId?: string;
+    after?: string;
+    before?: string;
+    reason?: string;
+}
 
 /**
  * Map of all events the {@link Client} can emit, keyed by event name with
@@ -225,9 +312,6 @@ export class Client extends EventEmitter {
     public logger: Logger;
     private rest: RESTClient;
     private token: string | null = null;
-    private clientCredentials: { clientId: string; clientSecret: string } | null = null;
-    private refreshTimer: NodeJS.Timeout | null = null;
-    private refreshPromise: Promise<string> | null = null;
 
     constructor(options: ClientOptions = {}) {
         super();
@@ -253,15 +337,6 @@ export class Client extends EventEmitter {
 
         this.events.on('interactionCreate', (interaction) => {
             void this.commands.handleInteraction(interaction).catch(console.error);
-        });
-
-        this.rest.interceptors.error.push(async (error) => {
-            if (!(error instanceof UnauthorizedError) || this.clientCredentials === null) {
-                return error;
-            }
-
-            await this.refreshToken();
-            return error;
         });
     }
 
@@ -322,100 +397,15 @@ export class Client extends EventEmitter {
         }
     }
 
-    /** Authenticates the client and connects to the gateway. */
+    /** Authenticates the client using a bot token and connects to the gateway. */
     public async login(token: string, callback?: () => Promise<void>): Promise<void> {
         this.logger.info('Logging in with token...');
         this.token = token;
         this.rest.setDefaultHeader('Authorization', `Bearer ${token}`);
-        this.scheduleTokenRefresh(token);
         await this.connectWS();
         if (callback) {
             await callback();
         }
-    }
-
-    /** Exchanges client ID/secret for a token and logs in. */
-    public async loginWithSecret(clientId: string, clientSecret: string): Promise<string> {
-        this.clientCredentials = { clientId, clientSecret };
-        const token = await this.fetchTokenWithSecret(clientId, clientSecret);
-        await this.login(token);
-        return token;
-    }
-
-    /** Re-exchanges stored client credentials for a fresh access token. */
-    public async refreshToken(): Promise<string> {
-        if (this.clientCredentials === null) {
-            throw new Error('Cannot refresh token without client credentials.');
-        }
-
-        if (this.refreshPromise) return this.refreshPromise;
-
-        this.refreshPromise = this.fetchTokenWithSecret(
-            this.clientCredentials.clientId,
-            this.clientCredentials.clientSecret,
-        )
-            .then((token) => {
-                this.token = token;
-                this.rest.setDefaultHeader('Authorization', `Bearer ${token}`);
-                this.scheduleTokenRefresh(token);
-                this.reconnectWS();
-                return token;
-            })
-            .finally(() => {
-                this.refreshPromise = null;
-            });
-
-        return this.refreshPromise;
-    }
-
-    private async fetchTokenWithSecret(clientId: string, clientSecret: string): Promise<string> {
-        const response = await this.rest.post<{ token: string }>('/bots/token', {
-            client_id: clientId,
-            client_secret: clientSecret,
-        });
-        return unwrap(response).token;
-    }
-
-    private scheduleTokenRefresh(token: string): void {
-        if (this.refreshTimer !== null) {
-            clearTimeout(this.refreshTimer);
-            this.refreshTimer = null;
-        }
-
-        if (this.clientCredentials === null) return;
-
-        const expiresAt = this.getJwtExpirationMs(token);
-        if (expiresAt === null) return;
-
-        const refreshAt = expiresAt - 5 * 60 * 1000;
-        const delay = Math.max(refreshAt - Date.now(), 0);
-        this.refreshTimer = setTimeout(() => {
-            void this.refreshToken().catch((err) => {
-                const message = err instanceof Error ? err.message : String(err);
-                this.logger.error(`Failed to refresh bot token: ${message}`);
-            });
-        }, delay);
-        this.refreshTimer.unref();
-    }
-
-    private getJwtExpirationMs(token: string): number | null {
-        const [, payload] = token.split('.');
-        if (!payload) return null;
-
-        try {
-            const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-            const decoded = JSON.parse(Buffer.from(normalized, 'base64').toString('utf8')) as {
-                exp?: number;
-            };
-            return typeof decoded.exp === 'number' ? decoded.exp * 1000 : null;
-        } catch {
-            return null;
-        }
-    }
-
-    private reconnectWS(): void {
-        if (!this.ws.ws) return;
-        this.ws.ws.close(4000, 'Refreshing authentication token');
     }
 
     /** Connects to the WebSocket gateway. */
@@ -693,6 +683,41 @@ export class Client extends EventEmitter {
         const response = await this.rest.get<{ totalCount: number; onlineCount: number }>(
             `/servers/${serverId}/stats`,
         );
+        return unwrap(response);
+    }
+
+    /** Fetches a server member and the attached user profile. */
+    public async getServerMember(serverId: string, userId: string): Promise<ServerMemberDetails> {
+        if (!this.token) throw new Error('Client is not logged in.');
+        const response = await this.rest.get<ServerMemberDetails>(
+            `/servers/${serverId}/members/${userId}`,
+        );
+        return unwrap(response);
+    }
+
+    /** Fetches a user profile by ID. */
+    public async getUserProfile(userId: string): Promise<UserProfile> {
+        if (!this.token) throw new Error('Client is not logged in.');
+        const response = await this.rest.get<UserProfile>(`/profile/${userId}`);
+        return unwrap(response);
+    }
+
+    /** Fetches the current ban list for a server. */
+    public async getServerBans(serverId: string): Promise<ServerBan[]> {
+        if (!this.token) throw new Error('Client is not logged in.');
+        const response = await this.rest.get<ServerBan[]>(`/servers/${serverId}/bans`);
+        return unwrap(response);
+    }
+
+    /** Fetches server audit-log entries. */
+    public async getAuditLog(
+        serverId: string,
+        query: AuditLogQuery = {},
+    ): Promise<AuditLogResponse> {
+        if (!this.token) throw new Error('Client is not logged in.');
+        const response = await this.rest.get<AuditLogResponse>(`/servers/${serverId}/audit-log`, {
+            params: query as Record<string, string | number | boolean | null | undefined>,
+        });
         return unwrap(response);
     }
 
