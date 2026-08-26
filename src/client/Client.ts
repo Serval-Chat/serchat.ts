@@ -577,17 +577,47 @@ export class Client extends EventEmitter {
         return unwrap(response).deletedCount;
     }
 
-    /** Adds a reaction to a message. */
+    /**
+     * Adds a reaction to a message.
+     */
     public async reactToMessage(
         serverId: string,
         channelId: string,
         messageId: string,
         emoji: string,
+        options?: { emojiId?: string },
     ): Promise<void> {
         if (!this.token) throw new Error('Client is not logged in.');
+        const payload = options?.emojiId
+            ? { emoji, emojiType: 'custom', emojiId: options.emojiId }
+            : { emoji, emojiType: 'unicode' };
         await this.rest.post(
             `/servers/${serverId}/channels/${channelId}/messages/${messageId}/reactions`,
-            { emoji },
+            payload,
+        );
+    }
+
+    /**
+     * Removes a reaction from a message.
+     *
+     * By default this removes only the authenticated user's own reaction.
+     * Pass `scope: 'all'` to remove every user's reaction for that emoji
+     * (requires the `manageReactions` permission).
+     */
+    public async removeReaction(
+        serverId: string,
+        channelId: string,
+        messageId: string,
+        emoji: string,
+        options?: { emojiId?: string; scope?: 'me' | 'all' },
+    ): Promise<void> {
+        if (!this.token) throw new Error('Client is not logged in.');
+        const payload: Record<string, string> = { emoji };
+        if (options?.emojiId) payload.emojiId = options.emojiId;
+        if (options?.scope) payload.scope = options.scope;
+        await this.rest.delete(
+            `/servers/${serverId}/channels/${channelId}/messages/${messageId}/reactions`,
+            payload as JsonValue,
         );
     }
 

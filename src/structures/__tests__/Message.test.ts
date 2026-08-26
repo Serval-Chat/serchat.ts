@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { Message } from '@/structures/Message.js';
 import type { Client } from '@/client/Client.js';
@@ -57,5 +57,31 @@ describe('Message', () => {
                     }),
                 ),
         ).toThrow('Message payload is missing id');
+    });
+
+    describe('react/unreact', () => {
+        it('delegates react() to client.reactToMessage with the resolved ids', async () => {
+            const reactToMessage = vi.fn().mockResolvedValue(undefined);
+            const client = { reactToMessage } as unknown as Client;
+            const message = new Message(client, makeMessagePayload({}));
+
+            await message.react('👍', { emojiId: 'custom-1' });
+
+            expect(reactToMessage).toHaveBeenCalledWith('server-1', 'channel-1', 'msg-1', '👍', {
+                emojiId: 'custom-1',
+            });
+        });
+
+        it('delegates unreact() to client.removeReaction with the resolved ids', async () => {
+            const removeReaction = vi.fn().mockResolvedValue(undefined);
+            const client = { removeReaction } as unknown as Client;
+            const message = new Message(client, makeMessagePayload({}));
+
+            await message.unreact('👍', { scope: 'all' });
+
+            expect(removeReaction).toHaveBeenCalledWith('server-1', 'channel-1', 'msg-1', '👍', {
+                scope: 'all',
+            });
+        });
     });
 });

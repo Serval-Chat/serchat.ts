@@ -126,9 +126,33 @@ export class Message implements IMessageServer {
         return this.client.sendMessage(this.serverId, this.channelId, payload);
     }
 
-    /** Adds a reaction to this message. */
-    public async react(emoji: string): Promise<void> {
-        return this.client.reactToMessage(this.serverId, this.channelId, this.messageId, emoji);
+    /** Adds a reaction to this message. Pass a custom emoji's ID via `options.emojiId`. */
+    public async react(emoji: string, options?: { emojiId?: string }): Promise<void> {
+        return this.client.reactToMessage(
+            this.serverId,
+            this.channelId,
+            this.messageId,
+            emoji,
+            options,
+        );
+    }
+
+    /**
+     * Removes a reaction from this message. Defaults to removing only the
+     * authenticated user's own reaction; pass `options.scope: 'all'` to
+     * remove every user's reaction for that emoji.
+     */
+    public async unreact(
+        emoji: string,
+        options?: { emojiId?: string; scope?: 'me' | 'all' },
+    ): Promise<void> {
+        return this.client.removeReaction(
+            this.serverId,
+            this.channelId,
+            this.messageId,
+            emoji,
+            options,
+        );
     }
 
     /** Deletes this message. */

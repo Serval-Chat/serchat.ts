@@ -133,6 +133,106 @@ describe('Client', () => {
         });
     });
 
+    describe('reactToMessage', () => {
+        it('sends emojiType: unicode by default', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => ({ reactions: [] }),
+            });
+
+            const client = new Client();
+            vi.spyOn(client, 'connectWS').mockResolvedValue();
+            await client.login('token');
+
+            await client.reactToMessage('server-1', 'channel-1', 'msg-1', '👍');
+
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://ser.chat/api/v1/servers/server-1/channels/channel-1/messages/msg-1/reactions',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({ emoji: '👍', emojiType: 'unicode' }),
+                }),
+            );
+        });
+
+        it('sends emojiType: custom with emojiId when provided', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => ({ reactions: [] }),
+            });
+
+            const client = new Client();
+            vi.spyOn(client, 'connectWS').mockResolvedValue();
+            await client.login('token');
+
+            await client.reactToMessage('server-1', 'channel-1', 'msg-1', 'party_blob', {
+                emojiId: 'emoji-1',
+            });
+
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://ser.chat/api/v1/servers/server-1/channels/channel-1/messages/msg-1/reactions',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({
+                        emoji: 'party_blob',
+                        emojiType: 'custom',
+                        emojiId: 'emoji-1',
+                    }),
+                }),
+            );
+        });
+    });
+
+    describe('removeReaction', () => {
+        it('sends only emoji by default', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => ({ reactions: [] }),
+            });
+
+            const client = new Client();
+            vi.spyOn(client, 'connectWS').mockResolvedValue();
+            await client.login('token');
+
+            await client.removeReaction('server-1', 'channel-1', 'msg-1', '👍');
+
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://ser.chat/api/v1/servers/server-1/channels/channel-1/messages/msg-1/reactions',
+                expect.objectContaining({
+                    method: 'DELETE',
+                    body: JSON.stringify({ emoji: '👍' }),
+                }),
+            );
+        });
+
+        it('includes scope when removing all reactions for an emoji', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => ({ reactions: [] }),
+            });
+
+            const client = new Client();
+            vi.spyOn(client, 'connectWS').mockResolvedValue();
+            await client.login('token');
+
+            await client.removeReaction('server-1', 'channel-1', 'msg-1', '👍', {
+                scope: 'all',
+            });
+
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://ser.chat/api/v1/servers/server-1/channels/channel-1/messages/msg-1/reactions',
+                expect.objectContaining({
+                    method: 'DELETE',
+                    body: JSON.stringify({ emoji: '👍', scope: 'all' }),
+                }),
+            );
+        });
+    });
+
     describe('error mapping', () => {
         it('should reject with mapped Error when API returns 400', async () => {
             mockFetch.mockResolvedValueOnce({
